@@ -736,7 +736,8 @@
                 console.log("DEBUG: docSnap.exists (as property):", docSnap.exists); 
                 // --- END DEBUG LOGS ---
 
-                if (docSnap.exists()) { 
+                // CHANGE HERE: Changed docSnap.exists() to docSnap.exists
+                if (docSnap.exists) { 
                     document.getElementById('create-error').innerText = "Room code already exists. Please try creating again.";
                     return;
                 }
@@ -782,7 +783,8 @@
 
                 const docSnap = await roomRef.get();
 
-                if (!docSnap.exists()) {
+                // CHANGE HERE: Changed !docSnap.exists() to !docSnap.exists
+                if (!docSnap.exists) {
                     document.getElementById('join-error').innerText = "Room not found!";
                     return;
                 }
@@ -825,7 +827,8 @@
 
             // Set up real-time listener for room changes
             unsubscribeFromRoomUpdates = roomRef.onSnapshot((docSnap) => {
-                if (docSnap.exists()) {
+                // CHANGE HERE: Changed docSnap.exists() to docSnap.exists
+                if (docSnap.exists) {
                     const roomData = docSnap.data();
                     updateUI(roomData);
                 } else {
@@ -980,7 +983,8 @@
                 const roomRef = roomsCollectionRef.doc(myRoom);
                 const docSnap = await roomRef.get();
 
-                if (docSnap.exists()) {
+                // CHANGE HERE: Changed docSnap.exists() to docSnap.exists
+                if (docSnap.exists) {
                     const roomData = docSnap.data();
 
                     if (myRole === 'host') {
