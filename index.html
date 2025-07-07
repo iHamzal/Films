@@ -590,17 +590,10 @@
     </div>
 
     <script type="module">
-        // Import the functions you need from the SDKs you need
-        // Using 'compat' versions for simpler integration in an existing script
+        // Import the Firebase app (compat version)
         import firebase from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js";
 
-        // --- CRITICAL FIX: Only import functions that are direct named exports ---
-        // FieldValue, arrayUnion, arrayRemove are NOT direct exports here.
-        import { getFirestore, collection, doc, setDoc, getDoc, updateDoc, onSnapshot, deleteDoc } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js";
-
-        import { getAnalytics } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-analytics-compat.js"; // Optional
-
-        // Your web app's Firebase configuration (Make sure this matches yours exactly)
+        // Your web app's Firebase configuration
         const firebaseConfig = {
             apiKey: "AIzaSyDAMUy4gvPqW9b9k1Sf5EwelR_lNFk2LCs",
             authDomain: "films-f40a3.firebaseapp.com",
@@ -608,29 +601,33 @@
             storageBucket: "films-f40a3.firebaseapp.com",
             messagingSenderId: "606093930517",
             appId: "1:606093930517:web:f4c809139282c2bba9de1c",
-            measurementId: "G-J8BT60XT2H" // Optional
+            measurementId: "G-J8BT60XT2H"
         };
 
         // Initialize Firebase
         const app = firebase.initializeApp(firebaseConfig);
-        const db = getFirestore(app); // Get a reference to the Firestore database
-        const analytics = getAnalytics(app); // Initialize analytics (optional)
+
+        // Get a reference to the Firestore service from the initialized app
+        const db = app.firestore(); // Access firestore directly from the app object
 
         // Make 'db' and necessary Firestore functions globally accessible
         window.db = db;
-        window.firestoreCollection = collection;
-        window.firestoreDoc = doc;
-        window.firestoreSetDoc = setDoc;
-        window.firestoreGetDoc = getDoc;
-        window.firestoreUpdateDoc = updateDoc;
-        window.firestoreOnSnapshot = onSnapshot;
-        window.firestoreDeleteDoc = deleteDoc; // Add deleteDoc here
+        window.firestoreCollection = db.collection;
+        window.firestoreDoc = db.doc;
+        window.firestoreSetDoc = (ref, data) => ref.set(data);
+        window.firestoreGetDoc = (ref) => ref.get();
+        window.firestoreUpdateDoc = (ref, data) => ref.update(data);
+        window.firestoreOnSnapshot = (ref, callback, errorCallback) => ref.onSnapshot(callback, errorCallback);
+        window.firestoreDeleteDoc = (ref) => ref.delete();
 
-        // --- CRITICAL FIX: Correct way to access FieldValue and its methods (like arrayUnion) ---
-        // FieldValue is accessed via firebase.firestore
+        // Correct way to access FieldValue and its methods
         window.firestoreFieldValue = firebase.firestore.FieldValue;
-        window.firestoreArrayUnion = firebase.firestore.FieldValue.arrayUnion; // Access arrayUnion via FieldValue
-        window.firestoreArrayRemove = firebase.firestore.FieldValue.arrayRemove; // Access arrayRemove via FieldValue
+        window.firestoreArrayUnion = firebase.firestore.FieldValue.arrayUnion;
+        window.firestoreArrayRemove = firebase.firestore.FieldValue.arrayRemove;
+
+        // Optional: Analytics (if still needed, can be initialized separately)
+        // import { getAnalytics } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-analytics-compat.js";
+        // const analytics = getAnalytics(app);
     </script>
 
     <script>
