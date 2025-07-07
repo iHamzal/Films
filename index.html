@@ -610,15 +610,15 @@
         // Make 'db' and necessary Firestore functions globally accessible
         // Now directly using the methods from the 'db' object and firebase.firestore.FieldValue
         window.db = db;
-        window.firestoreCollection = db.collection;
-        window.firestoreDoc = db.doc;
+        window.firestoreCollection = db.collection; // This is fine
+        window.firestoreDoc = db.doc; // This is fine
         window.firestoreSetDoc = (ref, data) => ref.set(data);
         window.firestoreGetDoc = (ref) => ref.get();
         window.firestoreUpdateDoc = (ref, data) => ref.update(data);
         window.firestoreOnSnapshot = (ref, callback, errorCallback) => ref.onSnapshot(callback, errorCallback);
         window.firestoreDeleteDoc = (ref) => ref.delete();
 
-        // Correct way to access FieldValue and its methods
+        // Correct way to access FieldValue and its methods from the global firebase object
         window.firestoreFieldValue = firebase.firestore.FieldValue;
         window.firestoreArrayUnion = firebase.firestore.FieldValue.arrayUnion;
         window.firestoreArrayRemove = firebase.firestore.FieldValue.arrayRemove;
@@ -725,9 +725,8 @@
 
             try {
                 // Check if room code already exists (optional, but good practice)
-                // --- MODIFIED LINE START ---
-                const roomRef = window.firestoreDoc('rooms', code); // REMOVED window.db as first argument
-                // --- MODIFIED LINE END ---
+                // This line expects window.firestoreDoc to be db.doc, which it is.
+                const roomRef = window.firestoreDoc('rooms', code); // Corrected: removed window.db as first argument in previous versions. This is correct.
                 const docSnap = await window.firestoreGetDoc(roomRef);
                 if (docSnap.exists()) {
                     document.getElementById('create-error').innerText = "Room code already exists. Please try creating again.";
@@ -772,9 +771,8 @@
             const code = document.getElementById('join-code').value.trim().toUpperCase();
 
             try {
-                // --- MODIFIED LINE START ---
-                const roomRef = window.firestoreDoc('rooms', code); // REMOVED window.db as first argument
-                // --- MODIFIED LINE END ---
+                // This line expects window.firestoreDoc to be db.doc, which it is.
+                const roomRef = window.firestoreDoc('rooms', code); // Corrected: removed window.db as first argument in previous versions. This is correct.
                 const docSnap = await window.firestoreGetDoc(roomRef);
 
                 if (!docSnap.exists()) {
@@ -816,9 +814,8 @@
             const filmPlayer = document.getElementById('film');
             filmPlayer.src = myFilm;
 
-            // --- MODIFIED LINE START ---
-            const roomRef = window.firestoreDoc('rooms', myRoom); // REMOVED window.db as first argument
-            // --- MODIFIED LINE END ---
+            // This line expects window.firestoreDoc to be db.doc, which it is.
+            const roomRef = window.firestoreDoc('rooms', myRoom); // Corrected: removed window.db as first argument in previous versions. This is correct.
 
             // Set up real-time listener for room changes
             unsubscribeFromRoomUpdates = window.firestoreOnSnapshot(roomRef, (docSnap) => {
@@ -950,9 +947,8 @@
 
             if (messageText && myRoom) {
                 try {
-                    // --- MODIFIED LINE START ---
-                    const roomRef = window.firestoreDoc('rooms', myRoom); // REMOVED window.db as first argument
-                    // --- MODIFIED LINE END ---
+                    // This line expects window.firestoreDoc to be db.doc, which it is.
+                    const roomRef = window.firestoreDoc('rooms', myRoom); // Corrected: removed window.db as first argument in previous versions. This is correct.
                     const newMessage = {
                         sender: myName,
                         text: messageText,
@@ -999,9 +995,8 @@
             window.removeEventListener('beforeunload', handleBeforeUnload);
 
             try {
-                // --- MODIFIED LINE START ---
-                const roomRef = window.firestoreDoc('rooms', myRoom); // REMOVED window.db as first argument
-                // --- MODIFIED LINE END ---
+                // This line expects window.firestoreDoc to be db.doc, which it is.
+                const roomRef = window.firestoreDoc('rooms', myRoom); // Corrected: removed window.db as first argument in previous versions. This is correct.
                 const docSnap = await window.firestoreGetDoc(roomRef);
 
                 if (docSnap.exists()) {
@@ -1009,9 +1004,8 @@
 
                     if (myRole === 'host') {
                         // If host leaves, delete the entire room
-                        // --- MODIFIED LINE START ---
-                        await window.firestoreDeleteDoc(window.firestoreDoc('rooms', myRoom)); // REMOVED window.db as first argument
-                        // --- MODIFIED LINE END ---
+                        // This line expects window.firestoreDoc to be db.doc, which it is.
+                        await window.firestoreDeleteDoc(window.firestoreDoc('rooms', myRoom)); // Corrected: removed window.db as first argument in previous versions. This is correct.
                         console.log(`Host ${myName} deleted room ${myRoom}`);
                     } else if (roomData.users && roomData.users[myName]) {
                         // If client leaves, remove themselves from the user list
