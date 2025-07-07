@@ -466,7 +466,7 @@
                 margin-bottom: 10px;
             }
             #chat-messages {
-                max-height: 180px; /* Less reduction in max height */
+                max-height: 180px; /* More items visible */
                 font-size: 0.9em; /* Less reduction */
                 padding-bottom: 10px;
                 margin-bottom: 10px;
@@ -592,8 +592,12 @@
     <script type="module">
         // Import the functions you need from the SDKs you need
         // Using 'compat' versions for simpler integration in an existing script
-        import firebase from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"; // Correct import for firebase app
-        import { getFirestore, collection, doc, setDoc, getDoc, updateDoc, arrayUnion, onSnapshot } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"; // FieldValue removed from here
+        import firebase from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"; 
+        
+        // --- CRITICAL FIX: Only import functions that are direct named exports ---
+        // FieldValue and arrayUnion are properties of firebase.firestore.FieldValue, not direct exports here.
+        import { getFirestore, collection, doc, setDoc, getDoc, updateDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js";
+        
         import { getAnalytics } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-analytics-compat.js"; // Optional
 
         // Your web app's Firebase configuration (Make sure this matches yours exactly)
@@ -608,21 +612,21 @@
         };
 
         // Initialize Firebase
-        const app = firebase.initializeApp(firebaseConfig); // Use firebase.initializeApp
+        const app = firebase.initializeApp(firebaseConfig); 
         const db = getFirestore(app); // Get a reference to the Firestore database
         const analytics = getAnalytics(app); // Initialize analytics (optional)
 
         // Make 'db' and necessary Firestore functions globally accessible
-        // This allows your main script block to use them directly
         window.db = db;
         window.firestoreCollection = collection;
         window.firestoreDoc = doc;
         window.firestoreSetDoc = setDoc;
         window.firestoreGetDoc = getDoc;
         window.firestoreUpdateDoc = updateDoc;
-        window.firestoreArrayUnion = arrayUnion;
-        window.firestoreOnSnapshot = onSnapshot; // For real-time updates
-        window.firestoreFieldValue = firebase.firestore.FieldValue; // Correct FieldValue access
+        window.firestoreOnSnapshot = onSnapshot; 
+        
+        // --- CRITICAL FIX: Correct way to access FieldValue and its methods (like arrayUnion) ---
+        window.firestoreFieldValue = firebase.firestore.FieldValue; 
     </script>
 
     <script>
@@ -897,7 +901,7 @@
                 const roomRef = window.firestoreDoc(window.db, 'rooms', myRoom);
                 // Use arrayUnion to add message to the messages array in Firestore
                 await window.firestoreUpdateDoc(roomRef, {
-                    messages: window.firestoreArrayUnion(msgObj)
+                    messages: window.firestoreFieldValue.arrayUnion(msgObj)
                 });
 
                 chatInput.value = ''; // Clear input after sending
