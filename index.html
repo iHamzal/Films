@@ -589,12 +589,8 @@
         </div>
     </div>
 
-    <!-- Firebase SDKs - Load these as standard scripts, not modules -->
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
-    <!-- Optional: Analytics -->
-    <!-- <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-analytics-compat.js"></script> -->
-
     <script>
         // Your web app's Firebase configuration
         const firebaseConfig = {
@@ -617,19 +613,19 @@
 
         // Correct way to access FieldValue and its methods from the global firebase object.
         // These are still needed as they are not methods of the 'db' object directly.
-        const firestoreFieldValue = firebase.firestore.FieldValue; // Changed from window.firestoreFieldValue
-        const firestoreArrayUnion = firebase.firestore.FieldValue.arrayUnion; // Changed from window.firestoreArrayUnion
-        const firestoreArrayRemove = firebase.firestore.FieldValue.arrayRemove; // Changed from window.firestoreArrayRemove
+        const firestoreFieldValue = firebase.firestore.FieldValue;
+        const firestoreArrayUnion = firebase.firestore.FieldValue.arrayUnion;
+        const firestoreArrayRemove = firebase.firestore.FieldValue.arrayRemove;
 
         // --- Verification Log ---
         console.log("Firebase app initialized:", app);
         console.log("Firestore db object:", db);
-        if (typeof db.doc === 'function') { // Check db.doc directly
+        if (typeof db.doc === 'function') {
             console.log("db.doc is a function. Good!");
         } else {
             console.error("ERROR: db.doc is NOT a function!", db.doc);
         }
-        if (firestoreFieldValue && typeof firestoreArrayUnion === 'function') { // Check the new const
+        if (firestoreFieldValue && typeof firestoreArrayUnion === 'function') {
             console.log("firestoreArrayUnion is a function. Good!");
         } else {
             console.error("ERROR: firestoreArrayUnion is NOT a function!", firestoreArrayUnion);
@@ -726,8 +722,11 @@
             const code = generateRoomCode();
 
             try {
+                // ADDED LINE FOR DEBUGGING:
+                console.log("Generated room code:", code); 
+
                 // Use db.doc directly
-                const roomRef = db.doc('rooms', code);
+                const roomRef = db.doc('rooms', code); // This is the line that was causing the error
                 const docSnap = await roomRef.get(); // Use .get() directly on the reference
                 if (docSnap.exists()) {
                     document.getElementById('create-error').innerText = "Room code already exists. Please try creating again.";
@@ -933,7 +932,7 @@
                         text: messageText,
                         timestamp: firestoreFieldValue.serverTimestamp()
                     };
-                    await roomRef.update({ // Use .update() directly on the reference
+                    await roomRef.update({
                         messages: firestoreArrayUnion(newMessage)
                     });
                     chatInput.value = '';
@@ -966,18 +965,18 @@
             try {
                 // Use db.doc directly
                 const roomRef = db.doc('rooms', myRoom);
-                const docSnap = await roomRef.get(); // Use .get() directly on the reference
+                const docSnap = await roomRef.get();
 
                 if (docSnap.exists()) {
                     const roomData = docSnap.data();
 
                     if (myRole === 'host') {
-                        await roomRef.delete(); // Use .delete() directly on the reference
+                        await roomRef.delete();
                         console.log(`Host ${myName} deleted room ${myRoom}`);
                     } else if (roomData.users && roomData.users[myName]) {
                         const userUpdate = {};
                         userUpdate[`users.${myName}`] = firestoreFieldValue.delete();
-                        await roomRef.update(userUpdate); // Use .update() directly on the reference
+                        await roomRef.update(userUpdate);
                         console.log(`Client ${myName} left room ${myRoom}`);
                     }
                 }
