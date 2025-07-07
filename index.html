@@ -589,10 +589,9 @@
         </div>
     </div>
 
-    <script type="module">
-        // Import the Firebase app (compat version)
-        import firebase from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js";
-
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+    <script>
         // Your web app's Firebase configuration
         const firebaseConfig = {
             apiKey: "AIzaSyDAMUy4gvPqW9b9k1Sf5EwelR_lNFk2LCs",
@@ -604,13 +603,12 @@
             measurementId: "G-J8BT60XT2H"
         };
 
-        // Initialize Firebase
+        // Initialize Firebase (will be available globally after the above scripts load)
         const app = firebase.initializeApp(firebaseConfig);
-
-        // Get a reference to the Firestore service from the initialized app
-        const db = app.firestore(); // Access firestore directly from the app object
+        const db = app.firestore(); // Get a reference to the Firestore database
 
         // Make 'db' and necessary Firestore functions globally accessible
+        // Now directly using the methods from the 'db' object and firebase.firestore.FieldValue
         window.db = db;
         window.firestoreCollection = db.collection;
         window.firestoreDoc = db.doc;
@@ -625,12 +623,24 @@
         window.firestoreArrayUnion = firebase.firestore.FieldValue.arrayUnion;
         window.firestoreArrayRemove = firebase.firestore.FieldValue.arrayRemove;
 
-        // Optional: Analytics (if still needed, can be initialized separately)
-        // import { getAnalytics } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-analytics-compat.js";
-        // const analytics = getAnalytics(app);
-    </script>
+        // Optional: Analytics (if needed)
+        // const analytics = firebase.analytics(); // If you uncomment the analytics script, uncomment this too
 
-    <script>
+
+        // --- Verification Log ---
+        console.log("Firebase app initialized:", app);
+        console.log("Firestore db object:", db);
+        if (typeof window.firestoreDoc === 'function') {
+            console.log("window.firestoreDoc is a function. Good!");
+        } else {
+            console.error("ERROR: window.firestoreDoc is NOT a function!", window.firestoreDoc);
+        }
+        if (window.firestoreFieldValue && typeof window.firestoreArrayUnion === 'function') {
+            console.log("window.firestoreArrayUnion is a function. Good!");
+        } else {
+            console.error("ERROR: window.firestoreArrayUnion is NOT a function!", window.firestoreArrayUnion);
+        }
+
         let myName = localStorage.getItem('movieroom_myName') || "";
         let myRoom = null;
         let myRole = null; // 'host' or 'client'
