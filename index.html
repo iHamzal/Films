@@ -725,7 +725,8 @@
 
             try {
                 // Check if room code already exists (optional, but good practice)
-                const roomRef = window.firestoreDoc(window.db, 'rooms', code);
+                // MODIFIED LINE: Removed redundant 'window.db' argument
+                const roomRef = window.firestoreDoc('rooms', code);
                 const docSnap = await window.firestoreGetDoc(roomRef);
                 if (docSnap.exists()) {
                     document.getElementById('create-error').innerText = "Room code already exists. Please try creating again.";
@@ -770,7 +771,8 @@
             const code = document.getElementById('join-code').value.trim().toUpperCase();
 
             try {
-                const roomRef = window.firestoreDoc(window.db, 'rooms', code);
+                // MODIFIED LINE: Removed redundant 'window.db' argument
+                const roomRef = window.firestoreDoc('rooms', code);
                 const docSnap = await window.firestoreGetDoc(roomRef);
 
                 if (!docSnap.exists()) {
@@ -812,7 +814,8 @@
             const filmPlayer = document.getElementById('film');
             filmPlayer.src = myFilm;
 
-            const roomRef = window.firestoreDoc(window.db, 'rooms', myRoom);
+            // MODIFIED LINE: Removed redundant 'window.db' argument
+            const roomRef = window.firestoreDoc('rooms', myRoom);
 
             // Set up real-time listener for room changes
             unsubscribeFromRoomUpdates = window.firestoreOnSnapshot(roomRef, (docSnap) => {
@@ -944,7 +947,8 @@
 
             if (messageText && myRoom) {
                 try {
-                    const roomRef = window.firestoreDoc(window.db, 'rooms', myRoom);
+                    // MODIFIED LINE: Removed redundant 'window.db' argument
+                    const roomRef = window.firestoreDoc('rooms', myRoom);
                     const newMessage = {
                         sender: myName,
                         text: messageText,
@@ -991,7 +995,8 @@
             window.removeEventListener('beforeunload', handleBeforeUnload);
 
             try {
-                const roomRef = window.firestoreDoc(window.db, 'rooms', myRoom);
+                // MODIFIED LINE: Removed redundant 'window.db' argument
+                const roomRef = window.firestoreDoc('rooms', myRoom);
                 const docSnap = await window.firestoreGetDoc(roomRef);
 
                 if (docSnap.exists()) {
@@ -999,7 +1004,8 @@
 
                     if (myRole === 'host') {
                         // If host leaves, delete the entire room
-                        await window.firestoreDeleteDoc(window.firestoreDoc(window.db, 'rooms', myRoom));
+                        // MODIFIED LINE: Removed redundant 'window.db' argument
+                        await window.firestoreDeleteDoc(window.firestoreDoc('rooms', myRoom));
                         console.log(`Host ${myName} deleted room ${myRoom}`);
                     } else if (roomData.users && roomData.users[myName]) {
                         // If client leaves, remove themselves from the user list
