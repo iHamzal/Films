@@ -596,7 +596,7 @@
         
         // --- CRITICAL FIX: Only import functions that are direct named exports ---
         // FieldValue and arrayUnion are properties of firebase.firestore.FieldValue, not direct exports here.
-        import { getFirestore, collection, doc, setDoc, getDoc, updateDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js";
+        import { getFirestore, collection, doc, setDoc, getDoc, updateDoc, onSnapshot, arrayUnion, arrayRemove } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js";
         
         import { getAnalytics } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-analytics-compat.js"; // Optional
 
@@ -627,6 +627,8 @@
         
         // --- CRITICAL FIX: Correct way to access FieldValue and its methods (like arrayUnion) ---
         window.firestoreFieldValue = firebase.firestore.FieldValue; 
+        window.firestoreArrayUnion = arrayUnion; // Make arrayUnion available globally
+        window.firestoreArrayRemove = arrayRemove; // Make arrayRemove available globally
     </script>
 
     <script>
@@ -656,9 +658,9 @@
                     unsubscribeFromRoomUpdates();
                     unsubscribeFromRoomUpdates = null; // Clear the reference
                 }
-                 // Clear any setInterval if it's still running (it shouldn't be much now)
-                clearInterval(progressUpdateInterval); 
-                progressUpdateInterval = null;
+                   // Clear any setInterval if it's still running (it shouldn't be much now)
+                   clearInterval(progressUpdateInterval); 
+                   progressUpdateInterval = null;
             }
         }
 
@@ -775,312 +777,253 @@
 
                 // Add current user to the room's users list if not already there
                 if (!roomData.users || !roomData.users[myName]) {
-                    const updatedUsers = { ...roomData.users, [myName]: { currentTime: roomData.currentFilmTime || 0, lastUpdate: window.firestoreFieldValue.serverTimestamp() } };
-                    await window.firestoreUpdateDoc(roomRef, { users: updatedUsers });
+                    // Correctly use arrayUnion via window.firestoreArrayUnion
+                    const userUpdate = {};
+                    userUpdate[`users.${myName}`] = { currentTime: roomData.currentFilmTime || 0, lastUpdate: window.firestoreFieldValue.serverTimestamp() };
+                    await window.firestoreUpdateDoc(roomRef, userUpdate);
                 }
 
-                document.getElementById('join-error').innerText = "";
                 enterRoom();
 
             } catch (e) {
                 console.error("Error joining room:", e);
-                document.getElementById('join-error').innerText = "Failed to join room. Please try again.";
+                document.getElementById('join-error').innerText = "Failed to join room. Please check the code and try again.";
             }
         }
 
-        function enterRoom() {
+        // Enter Room - General setup for both host and client
+        async function enterRoom() {
+            if (!myRoom) {
+                console.error("No room code available to enter.");
+                return;
+            }
+
+            document.getElementById('current-room-code').innerText = myRoom;
             showScreen('room');
-            document.getElementById('current-room-code').textContent = myRoom;
-            const filmElement = document.getElementById('film');
-            filmElement.src = myFilm;
+            const filmPlayer = document.getElementById('film');
+            filmPlayer.src = myFilm;
 
-            // NEW: Start the real-time listener for this room
-            startRealtimeUpdates(myRoom);
+            const roomRef = window.firestoreDoc(window.db, 'rooms', myRoom);
 
-            // Optional: Add event listeners for video play/pause/seek for host sync
+            // Set up real-time listener for room changes
+            unsubscribeFromRoomUpdates = window.firestoreOnSnapshot(roomRef, (docSnap) => {
+                if (docSnap.exists()) {
+                    const roomData = docSnap.data();
+                    updateUI(roomData); // Update chat, user list, video sync
+                } else {
+                    // Room might have been deleted by host
+                    alert("The host has left the room. You will be redirected to the main menu.");
+                    leaveRoom(true); // Force leave
+                }
+            }, (error) => {
+                console.error("Error listening to room updates:", error);
+                alert("Disconnected from room. Please try again.");
+                leaveRoom(true); // Force leave on error
+            });
+
+            // If I am the host, set up sync listeners on my video player
             if (myRole === 'host') {
-                filmElement.onplay = () => updateFilmState(myRoom, true, filmElement.currentTime);
-                filmElement.onpause = () => updateFilmState(myRoom, false, filmElement.currentTime);
-                filmElement.ontimeupdate = () => {
-                    // Only update frequently if host and film is playing
-                    if (myRole === 'host' && !filmElement.paused) {
-                        updateUserProgress(); // This will now update Firestore for host's own progress
-                    }
+                filmPlayer.onplay = async () => {
+                    await window.firestoreUpdateDoc(roomRef, { isPlaying: true, currentFilmTime: filmPlayer.currentTime });
                 };
-                filmElement.onseeking = () => updateFilmState(myRoom, filmElement.paused, filmElement.currentTime);
-            } else {
-                // For clients, prevent manual control to rely on host sync
-                filmElement.onplay = () => { if (myRole === 'client') filmElement.pause(); }; 
-                filmElement.onpause = () => { if (myRole === 'client') filmElement.play(); }; 
-                filmElement.onseeking = () => { if (myRole === 'client') filmElement.currentTime = filmElement.currentTime; }; 
+                filmPlayer.onpause = async () => {
+                    await window.firestoreUpdateDoc(roomRef, { isPlaying: false, currentFilmTime: filmPlayer.currentTime });
+                };
+                filmPlayer.onseeked = async () => {
+                    await window.firestoreUpdateDoc(roomRef, { currentFilmTime: filmPlayer.currentTime });
+                };
+
+                // Host periodically updates their current time to ensure clients can sync
+                // Only if the video is actually playing, to avoid unnecessary writes
+                progressUpdateInterval = setInterval(async () => {
+                    if (!filmPlayer.paused) {
+                        try {
+                            const userUpdate = {};
+                            userUpdate[`users.${myName}.currentTime`] = filmPlayer.currentTime;
+                            userUpdate[`users.${myName}.lastUpdate`] = window.firestoreFieldValue.serverTimestamp();
+                            await window.firestoreUpdateDoc(roomRef, userUpdate);
+                        } catch (e) {
+                            console.error("Error updating host progress:", e);
+                            clearInterval(progressUpdateInterval);
+                        }
+                    }
+                }, 5000); // Update every 5 seconds if playing
+            }
+
+             // Add event listener for beforeunload to remove user from room
+            window.addEventListener('beforeunload', handleBeforeUnload);
+        }
+
+        function handleBeforeUnload(event) {
+            // This is primarily for when the user closes the tab/browser
+            // The actual removal from the user list should ideally happen
+            // in a server-side function triggered by onDisconnect or by a
+            // periodic client-side check for inactive users.
+            // However, we can attempt a best-effort client-side removal here.
+            leaveRoom(true); // Pass true to skip screen transition if already closing
+        }
+
+
+        // Update UI based on Firestore data
+        function updateUI(roomData) {
+            const filmPlayer = document.getElementById('film');
+
+            // Update user list
+            const userListElement = document.getElementById('user-list');
+            userListElement.innerHTML = ''; // Clear current list
+            if (roomData.users) {
+                const usersArray = Object.keys(roomData.users);
+                usersArray.forEach(user => {
+                    const listItem = document.createElement('li');
+                    listItem.textContent = user;
+                    userListElement.appendChild(listItem);
+                });
+            }
+
+            // Update chat messages
+            const chatMessagesElement = document.getElementById('chat-messages');
+            if (roomData.messages && roomData.messages.length !== chatMessagesElement.children.length) {
+                // Only update if message count has changed to avoid re-rendering constantly
+                chatMessagesElement.innerHTML = ''; // Clear current chat
+                roomData.messages.forEach(msg => {
+                    const messageDiv = document.createElement('div');
+                    const senderSpan = document.createElement('span');
+                    senderSpan.classList.add('chat-sender');
+                    senderSpan.textContent = `${msg.sender}:`;
+                    
+                    messageDiv.appendChild(senderSpan);
+                    messageDiv.appendChild(document.createTextNode(` ${msg.text}`)); // Use createTextNode for safety
+                    chatMessagesElement.appendChild(messageDiv);
+                });
+                chatMessagesElement.scrollTop = chatMessagesElement.scrollHeight; // Scroll to bottom
+            }
+
+            // Sync video for clients
+            if (myRole === 'client') {
+                const hostTime = roomData.currentFilmTime || 0;
+                const isPlaying = roomData.isPlaying || false;
+
+                // Only sync if difference is significant or playing state doesn't match
+                const timeDifference = Math.abs(filmPlayer.currentTime - hostTime);
+                if (timeDifference > 2 || (isPlaying && filmPlayer.paused) || (!isPlaying && !filmPlayer.paused)) {
+                    filmPlayer.currentTime = hostTime;
+                    if (isPlaying) {
+                        filmPlayer.play().catch(e => console.error("Error playing video:", e));
+                    } else {
+                        filmPlayer.pause();
+                    }
+                }
             }
         }
+
+        // Send Chat Message (UPDATED FOR FIREBASE)
+        async function sendChatMessage(event) {
+            // Check if the event is from a keypress and if it's not the Enter key (to prevent accidental send on focus)
+            if (event && event.type === 'keypress' && event.key !== 'Enter') {
+                return;
+            }
+            // Allow sending on button click, or if Enter key is pressed without Shift (for new line)
+            if (event && event.type === 'keypress' && event.key === 'Enter' && event.shiftKey) {
+                return; // Do nothing if Shift + Enter (allow new line)
+            }
+            if (event && event.type === 'keypress' && event.key === 'Enter') {
+                event.preventDefault(); // Prevent default Enter key behavior (e.g., new line in textarea)
+            }
+
+            const chatInput = document.getElementById('chat-input');
+            const messageText = chatInput.value.trim();
+
+            if (messageText && myRoom) {
+                try {
+                    const roomRef = window.firestoreDoc(window.db, 'rooms', myRoom);
+                    const newMessage = {
+                        sender: myName,
+                        text: messageText,
+                        timestamp: window.firestoreFieldValue.serverTimestamp() // Use server timestamp
+                    };
+                    // Use arrayUnion to add message to array without overwriting
+                    await window.firestoreUpdateDoc(roomRef, {
+                        messages: window.firestoreArrayUnion(newMessage)
+                    });
+                    chatInput.value = ''; // Clear input
+                } catch (e) {
+                    console.error("Error sending message:", e);
+                }
+            }
+        }
+
+        // Listen for Enter key in chat input
+        document.addEventListener('DOMContentLoaded', () => {
+            const chatInput = document.getElementById('chat-input');
+            if (chatInput) {
+                chatInput.addEventListener('keypress', sendChatMessage);
+            }
+        });
 
         // Leave Room (UPDATED FOR FIREBASE)
-        async function leaveRoom() { // Made async
-            // Stop the Firestore listener
+        async function leaveRoom(force = false) {
+            if (!myRoom) {
+                showScreen('main-menu');
+                return;
+            }
+
+            const filmPlayer = document.getElementById('film');
+            filmPlayer.pause();
+            filmPlayer.src = ""; // Clear video source
+
+            // Unsubscribe from real-time updates
             if (unsubscribeFromRoomUpdates) {
                 unsubscribeFromRoomUpdates();
                 unsubscribeFromRoomUpdates = null;
             }
+            clearInterval(progressUpdateInterval); // Clear host's progress update interval
+            progressUpdateInterval = null;
 
-            // Remove self from the room's user list in Firestore
-            if (myRoom && myName) {
-                try {
-                    const roomRef = window.firestoreDoc(window.db, 'rooms', myRoom);
-                    const docSnap = await window.firestoreGetDoc(roomRef);
-                    if (docSnap.exists()) {
-                        let roomData = docSnap.data();
-                        if (roomData.users && roomData.users[myName]) {
-                            // Create a new users object without the current user
-                            const updatedUsers = { ...roomData.users };
-                            delete updatedUsers[myName];
-                            
-                            // If host is leaving, and no other users, you might want to delete the room
-                            if (myRole === 'host' && Object.keys(updatedUsers).length === 0) {
-                                // OPTIONAL: If host leaves and no one else is there, delete the room
-                                // This cleans up your Firestore database
-                                // await window.firestoreDeleteDoc(roomRef); 
-                                // For now, we'll just update users if not deleting
-                                console.log("Host left, no users remaining. Room can be considered inactive.");
-                                await window.firestoreUpdateDoc(roomRef, { users: updatedUsers, isPlaying: false, currentFilmTime: 0 }); // Clear state
-                            } else {
-                                // Just update the user list in the existing room
-                                 await window.firestoreUpdateDoc(roomRef, { users: updatedUsers });
-                            }
-                        }
-                    }
-                } catch (e) {
-                    console.error("Error leaving room / updating user list:", e);
-                }
-            }
-
-            myRoom = null;
-            myRole = null;
-            myFilm = null;
-            document.getElementById('film').src = "";
-            document.getElementById('chat-messages').innerHTML = '';
-            document.getElementById('user-list').innerHTML = '';
-            showScreen('main-menu');
-        }
-
-        // --- Chat functionality ---
-        const chatInput = document.getElementById('chat-input');
-        const chatMessagesDiv = document.getElementById('chat-messages');
-
-        // Load/Render Chat Messages (Called by real-time listener)
-        function renderChatMessages(messages) { // Renamed from loadChatMessages
-            chatMessagesDiv.innerHTML = ''; // Clear existing messages
-            if (messages) {
-                messages.forEach(msg => {
-                    const msgDiv = document.createElement('div');
-                    const senderSpan = document.createElement('span');
-                    senderSpan.classList.add('chat-sender');
-                    senderSpan.textContent = `${msg.sender}: `;
-                    msgDiv.appendChild(senderSpan);
-                    msgDiv.append(document.createTextNode(msg.text));
-                    chatMessagesDiv.appendChild(msgDiv);
-                });
-            }
-            chatMessagesDiv.scrollTop = chatMessagesDiv.scrollHeight; // Scroll to bottom
-        }
-
-        // Send Chat Message (UPDATED FOR FIREBASE)
-        async function sendChatMessage(e) { // Made async
-            e.preventDefault();
-            const text = chatInput.value.trim();
-            if (!text || !myRoom || !myName) return;
-
-            const msgObj = {
-                sender: myName,
-                text: text,
-                timestamp: window.firestoreFieldValue.serverTimestamp() // Use server timestamp
-            };
+            window.removeEventListener('beforeunload', handleBeforeUnload);
 
             try {
                 const roomRef = window.firestoreDoc(window.db, 'rooms', myRoom);
-                // Use arrayUnion to add message to the messages array in Firestore
-                await window.firestoreUpdateDoc(roomRef, {
-                    messages: window.firestoreFieldValue.arrayUnion(msgObj)
-                });
+                const docSnap = await window.firestoreGetDoc(roomRef);
 
-                chatInput.value = ''; // Clear input after sending
-                // The real-time listener will now update the chatMessagesDiv
-                // No need to manually append here if onSnapshot is properly handling updates
-            } catch (e) {
-                console.error("Error sending message:", e);
-            }
-        }
+                if (docSnap.exists()) {
+                    const roomData = docSnap.data();
 
-        chatInput.addEventListener('input', () => {
-            chatInput.style.height = 'auto';
-            chatInput.style.height = Math.min(chatInput.scrollHeight, 192) + 'px';
-        });
-
-        // --- User List and Progress Tracking ---
-        const filmElement = document.getElementById('film');
-        const floatingUserList = document.getElementById('floating-user-list-container');
-        const roomElement = document.getElementById('room'); 
-
-        function formatTime(seconds) {
-            if (isNaN(seconds) || seconds < 0) return '00:00';
-            const h = Math.floor(seconds / 3600);
-            const m = Math.floor((seconds % 3600) / 60);
-            const s = Math.floor(seconds % 60);
-            return [h, m, s]
-                .map(v => v < 10 ? '0' + v : v)
-                .filter((v, i) => v !== '00' || i > 0 || h > 0)
-                .join(':') || '00:00';
-        }
-
-        // Update User Progress (UPDATED FOR FIREBASE)
-        // This function will now ONLY update the *current user's* own progress
-        async function updateUserProgress() {
-            if (!myRoom || !myName || filmElement.readyState < 2) return;
-
-            try {
-                const roomRef = window.firestoreDoc(window.db, 'rooms', myRoom);
-                // Update only this user's current time and last update
-                const updateData = {
-                    [`users.${myName}.currentTime`]: filmElement.currentTime,
-                    [`users.${myName}.lastUpdate`]: window.firestoreFieldValue.serverTimestamp()
-                };
-
-                // If I am the host, also update the global film time and playing state
-                if (myRole === 'host') {
-                    updateData.currentFilmTime = filmElement.currentTime;
-                    updateData.isPlaying = !filmElement.paused;
+                    if (myRole === 'host') {
+                        // If host leaves, delete the entire room
+                        await window.firestoreDoc(window.db, 'rooms', myRoom).delete();
+                        console.log(`Host ${myName} deleted room ${myRoom}`);
+                    } else if (roomData.users && roomData.users[myName]) {
+                        // If client leaves, remove themselves from the user list
+                        const userUpdate = {};
+                        userUpdate[`users.${myName}`] = window.firestoreFieldValue.delete(); // Correctly delete user field
+                        await window.firestoreUpdateDoc(roomRef, userUpdate);
+                        console.log(`Client ${myName} left room ${myRoom}`);
+                    }
                 }
-
-                await window.firestoreUpdateDoc(roomRef, updateData);
             } catch (e) {
-                console.error("Error updating user/host progress:", e);
-            }
-        }
-
-        // Render User List (Called by real-time listener)
-        function renderUserList(usersData, hostName) { // Renamed from updateUserList
-            const userListElement = document.getElementById('user-list');
-            userListElement.innerHTML = '';
-
-            if (usersData) {
-                const users = Object.keys(usersData).sort();
-
-                users.forEach(username => {
-                    const userData = usersData[username];
-                    const listItem = document.createElement('li');
-                    const currentTimeFormatted = formatTime(userData.currentTime || 0); // Handle potential undefined currentTime
-                    let userStatus = `${username} (${currentTimeFormatted})`;
-
-                    if (username === myName) {
-                        userStatus = `(You) ${userStatus}`;
-                    }
-                    if (hostName === username) { // Use hostName passed from roomData
-                        userStatus = `(Host) ${userStatus}`;
-                    }
-
-                    listItem.textContent = userStatus;
-                    userListElement.appendChild(listItem);
-                });
-            }
-        }
-
-        // NEW: Real-time Listener function (replaces setInterval for updates)
-        function startRealtimeUpdates(roomCode) {
-            // Clear any previous listener
-            if (unsubscribeFromRoomUpdates) {
-                unsubscribeFromRoomUpdates();
-            }
-
-            // Listen for changes to the specific room document
-            const roomRef = window.firestoreDoc(window.db, 'rooms', roomCode);
-            unsubscribeFromRoomUpdates = window.firestoreOnSnapshot(roomRef, (docSnapshot) => {
-                if (docSnapshot.exists()) {
-                    const roomData = docSnapshot.data();
-                    
-                    // Update film player source if it's different (shouldn't change often)
-                    if (filmElement.src !== roomData.film && roomData.film) {
-                        filmElement.src = roomData.film;
-                    }
-
-                    // Sync film time for clients (and potentially for host if they seek manually)
-                    // This is a basic sync. More advanced sync involves buffering, play/pause states etc.
-                    // Sync if time diff > 1.5s OR if play/pause state mismatch AND current user is NOT host
-                    if (Math.abs(filmElement.currentTime - (roomData.currentFilmTime || 0)) > 1.5 || (myRole !== 'host' && (filmElement.paused !== !roomData.isPlaying))) { 
-                        filmElement.currentTime = roomData.currentFilmTime || 0;
-                        if (roomData.isPlaying && filmElement.paused) {
-                            filmElement.play().catch(e => console.log("Auto-play blocked:", e));
-                        } else if (!roomData.isPlaying && !filmElement.paused) {
-                            filmElement.pause();
-                        }
-                    }
-
-                    // Render chat messages using the updated data
-                    renderChatMessages(roomData.messages || []);
-
-                    // Render user list using the updated data
-                    renderUserList(roomData.users || {}, roomData.host);
-
-                } else {
-                    // Room document no longer exists (e.g., host deleted it or it expired)
-                    alert("The room has been closed or no longer exists.");
-                    leaveRoom(); // Force user to leave
+                console.error("Error leaving room:", e);
+                // Continue to show main menu even if Firestore update fails
+            } finally {
+                myRoom = null;
+                myRole = null;
+                myFilm = null;
+                if (!force) { // Only change screen if not forced (e.g., by beforeunload)
+                    showScreen('main-menu');
                 }
-            }, (error) => {
-                console.error("Error listening to real-time updates:", error);
-                alert("Lost connection to the room. Please try joining again.");
-                leaveRoom();
-            });
-        }
-
-        // NEW: Function to sync play/pause/seek events from host to Firestore
-        async function updateFilmState(roomCode, isPlaying, currentTime) {
-            if (myRole !== 'host') return; // Only host can update film state
-
-            try {
-                const roomRef = window.firestoreDoc(window.db, 'rooms', roomCode);
-                await window.firestoreUpdateDoc(roomRef, {
-                    isPlaying: isPlaying,
-                    currentFilmTime: currentTime,
-                    lastHostUpdate: window.firestoreFieldValue.serverTimestamp() // Timestamp of last host activity
-                });
-            } catch (e) {
-                console.error("Error updating film state as host:", e);
             }
         }
 
-
-        // --- Floating User List Toggle ---
+        // Toggle Floating User List
         function toggleUserList() {
-            floatingUserList.classList.toggle('collapsed');
-            const arrow = document.querySelector('#floating-user-list-container .toggle-handle span');
-            if (floatingUserList.classList.contains('collapsed')) {
-                arrow.innerHTML = '&#9654;'; // Right arrow when collapsed
-            } else {
-                arrow.innerHTML = '&#9664;'; // Left arrow when expanded
-            }
-        }
-
-        // --- Fullscreen API handling ---
-        document.addEventListener('fullscreenchange', handleFullscreenChange);
-        document.addEventListener('webkitfullscreenchange', handleFullscreenChange); /* Safari */
-        document.addEventListener('mozfullscreenchange', handleFullscreenChange);    /* Firefox */
-        document.addEventListener('MSFullscreenChange', handleFullscreenChange);    /* IE/Edge */
-
-        function handleFullscreenChange() {
             const userListContainer = document.getElementById('floating-user-list-container');
-            // Check if *any* element is currently in fullscreen mode
-            if (document.fullscreenElement || document.webkitFullscreenElement || document.mozFullScreenElement || document.msFullscreenElement) {
-                // If the video (or any part of the document) goes fullscreen, hide the user list.
-                userListContainer.classList.add('hidden');
+            const toggleArrow = document.getElementById('toggle-arrow');
+            userListContainer.classList.toggle('collapsed');
+            if (userListContainer.classList.contains('collapsed')) {
+                toggleArrow.innerHTML = '&#9654;'; // Right arrow
             } else {
-                // If exiting fullscreen, and we are on the 'room' screen, show the user list.
-                if (!document.getElementById('room').classList.contains('hidden')) {
-                    userListContainer.classList.remove('hidden');
-                }
+                toggleArrow.innerHTML = '&#9660;'; // Down arrow
             }
         }
     </script>
-
 </body>
 </html>
