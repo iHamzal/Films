@@ -589,8 +589,12 @@
         </div>
     </div>
 
+    <!-- Firebase SDKs - Load these as standard scripts, not modules -->
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+    <!-- Optional: Analytics -->
+    <!-- <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-analytics-compat.js"></script> -->
+
     <script>
         // Your web app's Firebase configuration
         const firebaseConfig = {
@@ -608,34 +612,27 @@
         // Get Firestore instance
         const db = app.firestore();
 
-        // Make Firestore functions globally accessible by assigning them directly from the 'db' object
-        // and FieldValue from the global 'firebase.firestore' object.
-        // These assignments must happen *after* firebase is initialized.
-        window.db = db;
-        window.firestoreCollection = db.collection;
-        window.firestoreDoc = db.doc;
-        window.firestoreSetDoc = (ref, data) => ref.set(data);
-        window.firestoreGetDoc = (ref) => ref.get();
-        window.firestoreUpdateDoc = (ref, data) => ref.update(data);
-        window.firestoreOnSnapshot = (ref, callback, errorCallback) => ref.onSnapshot(callback, errorCallback);
-        window.firestoreDeleteDoc = (ref) => ref.delete();
+        // No longer assigning to window.firestoreCollection/Doc etc.
+        // We will use db.collection and db.doc directly in the functions.
 
-        window.firestoreFieldValue = firebase.firestore.FieldValue;
-        window.firestoreArrayUnion = firebase.firestore.FieldValue.arrayUnion;
-        window.firestoreArrayRemove = firebase.firestore.FieldValue.arrayRemove;
+        // Correct way to access FieldValue and its methods from the global firebase object.
+        // These are still needed as they are not methods of the 'db' object directly.
+        const firestoreFieldValue = firebase.firestore.FieldValue; // Changed from window.firestoreFieldValue
+        const firestoreArrayUnion = firebase.firestore.FieldValue.arrayUnion; // Changed from window.firestoreArrayUnion
+        const firestoreArrayRemove = firebase.firestore.FieldValue.arrayRemove; // Changed from window.firestoreArrayRemove
 
         // --- Verification Log ---
         console.log("Firebase app initialized:", app);
         console.log("Firestore db object:", db);
-        if (typeof window.firestoreDoc === 'function') {
-            console.log("window.firestoreDoc is a function. Good!");
+        if (typeof db.doc === 'function') { // Check db.doc directly
+            console.log("db.doc is a function. Good!");
         } else {
-            console.error("ERROR: window.firestoreDoc is NOT a function!", window.firestoreDoc);
+            console.error("ERROR: db.doc is NOT a function!", db.doc);
         }
-        if (window.firestoreFieldValue && typeof window.firestoreArrayUnion === 'function') {
-            console.log("window.firestoreArrayUnion is a function. Good!");
+        if (firestoreFieldValue && typeof firestoreArrayUnion === 'function') { // Check the new const
+            console.log("firestoreArrayUnion is a function. Good!");
         } else {
-            console.error("ERROR: window.firestoreArrayUnion is NOT a function!", window.firestoreArrayUnion);
+            console.error("ERROR: firestoreArrayUnion is NOT a function!", firestoreArrayUnion);
         }
 
         // Global variables for your application logic
@@ -729,8 +726,9 @@
             const code = generateRoomCode();
 
             try {
-                const roomRef = window.firestoreDoc('rooms', code);
-                const docSnap = await window.firestoreGetDoc(roomRef);
+                // Use db.doc directly
+                const roomRef = db.doc('rooms', code);
+                const docSnap = await roomRef.get(); // Use .get() directly on the reference
                 if (docSnap.exists()) {
                     document.getElementById('create-error').innerText = "Room code already exists. Please try creating again.";
                     return;
@@ -741,13 +739,13 @@
                     host: myName,
                     messages: [],
                     users: {
-                        [myName]: { currentTime: 0, lastUpdate: window.firestoreFieldValue.serverTimestamp() }
+                        [myName]: { currentTime: 0, lastUpdate: firestoreFieldValue.serverTimestamp() }
                     },
                     currentFilmTime: 0,
                     isPlaying: false
                 };
 
-                await window.firestoreSetDoc(roomRef, roomInfo);
+                await roomRef.set(roomInfo); // Use .set() directly on the reference
 
                 document.getElementById('created-room-code').innerText = code;
                 document.getElementById('created-room-info').classList.remove('hidden');
@@ -771,8 +769,9 @@
             const code = document.getElementById('join-code').value.trim().toUpperCase();
 
             try {
-                const roomRef = window.firestoreDoc('rooms', code);
-                const docSnap = await window.firestoreGetDoc(roomRef);
+                // Use db.doc directly
+                const roomRef = db.doc('rooms', code);
+                const docSnap = await roomRef.get(); // Use .get() directly on the reference
 
                 if (!docSnap.exists()) {
                     document.getElementById('join-error').innerText = "Room not found!";
@@ -787,8 +786,8 @@
 
                 if (!roomData.users || !roomData.users[myName]) {
                     const userUpdate = {};
-                    userUpdate[`users.${myName}`] = { currentTime: roomData.currentFilmTime || 0, lastUpdate: window.firestoreFieldValue.serverTimestamp() };
-                    await window.firestoreUpdateDoc(roomRef, userUpdate);
+                    userUpdate[`users.${myName}`] = { currentTime: roomData.currentFilmTime || 0, lastUpdate: firestoreFieldValue.serverTimestamp() };
+                    await roomRef.update(userUpdate); // Use .update() directly on the reference
                 }
 
                 enterRoom();
@@ -811,10 +810,11 @@
             const filmPlayer = document.getElementById('film');
             filmPlayer.src = myFilm;
 
-            const roomRef = window.firestoreDoc('rooms', myRoom);
+            // Use db.doc directly
+            const roomRef = db.doc('rooms', myRoom);
 
             // Set up real-time listener for room changes
-            unsubscribeFromRoomUpdates = window.firestoreOnSnapshot(roomRef, (docSnap) => {
+            unsubscribeFromRoomUpdates = roomRef.onSnapshot((docSnap) => { // Use .onSnapshot() directly on the reference
                 if (docSnap.exists()) {
                     const roomData = docSnap.data();
                     updateUI(roomData);
@@ -831,13 +831,13 @@
             // If I am the host, set up sync listeners on my video player
             if (myRole === 'host') {
                 filmPlayer.onplay = async () => {
-                    await window.firestoreUpdateDoc(roomRef, { isPlaying: true, currentFilmTime: filmPlayer.currentTime });
+                    await roomRef.update({ isPlaying: true, currentFilmTime: filmPlayer.currentTime });
                 };
                 filmPlayer.onpause = async () => {
-                    await window.firestoreUpdateDoc(roomRef, { isPlaying: false, currentFilmTime: filmPlayer.currentTime });
+                    await roomRef.update({ isPlaying: false, currentFilmTime: filmPlayer.currentTime });
                 };
                 filmPlayer.onseeked = async () => {
-                    await window.firestoreUpdateDoc(roomRef, { currentFilmTime: filmPlayer.currentTime });
+                    await roomRef.update({ currentFilmTime: filmPlayer.currentTime });
                 };
 
                 progressUpdateInterval = setInterval(async () => {
@@ -845,8 +845,8 @@
                         try {
                             const userUpdate = {};
                             userUpdate[`users.${myName}.currentTime`] = filmPlayer.currentTime;
-                            userUpdate[`users.${myName}.lastUpdate`] = window.firestoreFieldValue.serverTimestamp();
-                            await window.firestoreUpdateDoc(roomRef, userUpdate);
+                            userUpdate[`users.${myName}.lastUpdate`] = firestoreFieldValue.serverTimestamp();
+                            await roomRef.update(userUpdate);
                         } catch (e) {
                             console.error("Error updating host progress:", e);
                             clearInterval(progressUpdateInterval);
@@ -926,14 +926,15 @@
 
             if (messageText && myRoom) {
                 try {
-                    const roomRef = window.firestoreDoc('rooms', myRoom);
+                    // Use db.doc directly
+                    const roomRef = db.doc('rooms', myRoom);
                     const newMessage = {
                         sender: myName,
                         text: messageText,
-                        timestamp: window.firestoreFieldValue.serverTimestamp()
+                        timestamp: firestoreFieldValue.serverTimestamp()
                     };
-                    await window.firestoreUpdateDoc(roomRef, {
-                        messages: window.firestoreArrayUnion(newMessage)
+                    await roomRef.update({ // Use .update() directly on the reference
+                        messages: firestoreArrayUnion(newMessage)
                     });
                     chatInput.value = '';
                 } catch (e) {
@@ -963,19 +964,20 @@
             window.removeEventListener('beforeunload', handleBeforeUnload);
 
             try {
-                const roomRef = window.firestoreDoc('rooms', myRoom);
-                const docSnap = await window.firestoreGetDoc(roomRef);
+                // Use db.doc directly
+                const roomRef = db.doc('rooms', myRoom);
+                const docSnap = await roomRef.get(); // Use .get() directly on the reference
 
                 if (docSnap.exists()) {
                     const roomData = docSnap.data();
 
                     if (myRole === 'host') {
-                        await window.firestoreDeleteDoc(window.firestoreDoc('rooms', myRoom));
+                        await roomRef.delete(); // Use .delete() directly on the reference
                         console.log(`Host ${myName} deleted room ${myRoom}`);
                     } else if (roomData.users && roomData.users[myName]) {
                         const userUpdate = {};
-                        userUpdate[`users.${myName}`] = window.firestoreFieldValue.delete();
-                        await window.firestoreUpdateDoc(roomRef, userUpdate);
+                        userUpdate[`users.${myName}`] = firestoreFieldValue.delete();
+                        await roomRef.update(userUpdate); // Use .update() directly on the reference
                         console.log(`Client ${myName} left room ${myRoom}`);
                     }
                 }
