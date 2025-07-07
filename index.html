@@ -603,29 +603,26 @@
             measurementId: "G-J8BT60XT2H"
         };
 
-        // Initialize Firebase (will be available globally after the above scripts load)
+        // Initialize Firebase app
         const app = firebase.initializeApp(firebaseConfig);
-        const db = app.firestore(); // Get a reference to the Firestore database
+        // Get Firestore instance
+        const db = app.firestore();
 
-        // Make 'db' and necessary Firestore functions globally accessible
-        // Now directly using the methods from the 'db' object and firebase.firestore.FieldValue
+        // Make Firestore functions globally accessible by assigning them directly from the 'db' object
+        // and FieldValue from the global 'firebase.firestore' object.
+        // These assignments must happen *after* firebase is initialized.
         window.db = db;
-        window.firestoreCollection = db.collection; // This is fine
-        window.firestoreDoc = db.doc; // This is fine
+        window.firestoreCollection = db.collection;
+        window.firestoreDoc = db.doc;
         window.firestoreSetDoc = (ref, data) => ref.set(data);
         window.firestoreGetDoc = (ref) => ref.get();
         window.firestoreUpdateDoc = (ref, data) => ref.update(data);
         window.firestoreOnSnapshot = (ref, callback, errorCallback) => ref.onSnapshot(callback, errorCallback);
         window.firestoreDeleteDoc = (ref) => ref.delete();
 
-        // Correct way to access FieldValue and its methods from the global firebase object
         window.firestoreFieldValue = firebase.firestore.FieldValue;
         window.firestoreArrayUnion = firebase.firestore.FieldValue.arrayUnion;
         window.firestoreArrayRemove = firebase.firestore.FieldValue.arrayRemove;
-
-        // Optional: Analytics (if needed)
-        // const analytics = firebase.analytics(); // If you uncomment the analytics script, uncomment this too
-
 
         // --- Verification Log ---
         console.log("Firebase app initialized:", app);
@@ -641,12 +638,25 @@
             console.error("ERROR: window.firestoreArrayUnion is NOT a function!", window.firestoreArrayUnion);
         }
 
+        // Global variables for your application logic
         let myName = localStorage.getItem('movieroom_myName') || "";
         let myRoom = null;
         let myRole = null; // 'host' or 'client'
         let myFilm = null;
-        let progressUpdateInterval = null; // This interval is now largely replaced by onSnapshot
-        let unsubscribeFromRoomUpdates = null; // To stop Firestore real-time listener
+        let progressUpdateInterval = null;
+        let unsubscribeFromRoomUpdates = null;
+
+        // Wrap your main application logic in DOMContentLoaded to ensure Firebase is ready
+        document.addEventListener('DOMContentLoaded', function() {
+            checkUsername();
+
+            // Listen for Enter key in chat input
+            const chatInput = document.getElementById('chat-input');
+            if (chatInput) {
+                chatInput.addEventListener('keypress', sendChatMessage);
+            }
+        });
+
 
         // --- Helper function to show/hide screens ---
         function showScreen(screenId) {
@@ -683,11 +693,6 @@
             }
         }
 
-        // --- Initial check when the page loads ---
-        window.onload = function() {
-            checkUsername();
-        };
-
         // Save Username
         function saveUsername() {
             let val = document.getElementById('username-input').value.trim();
@@ -715,7 +720,7 @@
         }
 
         // Create Room (UPDATED FOR FIREBASE)
-        async function createRoom() { // Made async
+        async function createRoom() {
             let url = document.getElementById('film-link').value.trim();
             if (!url) {
                 document.getElementById('create-error').innerText = "Please enter a film link!";
@@ -724,36 +729,32 @@
             const code = generateRoomCode();
 
             try {
-                // Check if room code already exists (optional, but good practice)
-                // This line expects window.firestoreDoc to be db.doc, which it is.
-                const roomRef = window.firestoreDoc('rooms', code); // Corrected: removed window.db as first argument in previous versions. This is correct.
+                const roomRef = window.firestoreDoc('rooms', code);
                 const docSnap = await window.firestoreGetDoc(roomRef);
                 if (docSnap.exists()) {
                     document.getElementById('create-error').innerText = "Room code already exists. Please try creating again.";
-                    return; // Try again to generate a new code
+                    return;
                 }
 
                 const roomInfo = {
                     film: url,
                     host: myName,
-                    messages: [], // Empty array for chat messages
-                    users: { // Initial user, the host
+                    messages: [],
+                    users: {
                         [myName]: { currentTime: 0, lastUpdate: window.firestoreFieldValue.serverTimestamp() }
                     },
-                    // Add a global currentFilmTime to sync host's position primarily
                     currentFilmTime: 0,
-                    isPlaying: false // New: Track if the host's video is playing
+                    isPlaying: false
                 };
 
-                // Save room info to Firestore
                 await window.firestoreSetDoc(roomRef, roomInfo);
 
                 document.getElementById('created-room-code').innerText = code;
                 document.getElementById('created-room-info').classList.remove('hidden');
                 document.getElementById('create-error').innerText = "";
-                myRole = 'host'; // Set role here
-                myRoom = code; // Set myRoom
-                myFilm = url; // Set myFilm
+                myRole = 'host';
+                myRoom = code;
+                myFilm = url;
 
             } catch (e) {
                 console.error("Error creating room:", e);
@@ -762,17 +763,15 @@
         }
 
         function goToRoom() {
-            // myRole, myRoom, myFilm are already set in createRoom()
             enterRoom();
         }
 
         // Join Room (UPDATED FOR FIREBASE)
-        async function joinRoom() { // Made async
+        async function joinRoom() {
             const code = document.getElementById('join-code').value.trim().toUpperCase();
 
             try {
-                // This line expects window.firestoreDoc to be db.doc, which it is.
-                const roomRef = window.firestoreDoc('rooms', code); // Corrected: removed window.db as first argument in previous versions. This is correct.
+                const roomRef = window.firestoreDoc('rooms', code);
                 const docSnap = await window.firestoreGetDoc(roomRef);
 
                 if (!docSnap.exists()) {
@@ -786,9 +785,7 @@
                 myRoom = code;
                 myFilm = roomData.film;
 
-                // Add current user to the room's users list if not already there
                 if (!roomData.users || !roomData.users[myName]) {
-                    // Correctly use arrayUnion via window.firestoreArrayUnion
                     const userUpdate = {};
                     userUpdate[`users.${myName}`] = { currentTime: roomData.currentFilmTime || 0, lastUpdate: window.firestoreFieldValue.serverTimestamp() };
                     await window.firestoreUpdateDoc(roomRef, userUpdate);
@@ -814,23 +811,21 @@
             const filmPlayer = document.getElementById('film');
             filmPlayer.src = myFilm;
 
-            // This line expects window.firestoreDoc to be db.doc, which it is.
-            const roomRef = window.firestoreDoc('rooms', myRoom); // Corrected: removed window.db as first argument in previous versions. This is correct.
+            const roomRef = window.firestoreDoc('rooms', myRoom);
 
             // Set up real-time listener for room changes
             unsubscribeFromRoomUpdates = window.firestoreOnSnapshot(roomRef, (docSnap) => {
                 if (docSnap.exists()) {
                     const roomData = docSnap.data();
-                    updateUI(roomData); // Update chat, user list, video sync
+                    updateUI(roomData);
                 } else {
-                    // Room might have been deleted by host
                     alert("The host has left the room. You will be redirected to the main menu.");
-                    leaveRoom(true); // Force leave
+                    leaveRoom(true);
                 }
             }, (error) => {
                 console.error("Error listening to room updates:", error);
                 alert("Disconnected from room. Please try again.");
-                leaveRoom(true); // Force leave on error
+                leaveRoom(true);
             });
 
             // If I am the host, set up sync listeners on my video player
@@ -845,8 +840,6 @@
                     await window.firestoreUpdateDoc(roomRef, { currentFilmTime: filmPlayer.currentTime });
                 };
 
-                // Host periodically updates their current time to ensure clients can sync
-                // Only if the video is actually playing, to avoid unnecessary writes
                 progressUpdateInterval = setInterval(async () => {
                     if (!filmPlayer.paused) {
                         try {
@@ -859,30 +852,22 @@
                             clearInterval(progressUpdateInterval);
                         }
                     }
-                }, 5000); // Update every 5 seconds if playing
+                }, 5000);
             }
 
-             // Add event listener for beforeunload to remove user from room
             window.addEventListener('beforeunload', handleBeforeUnload);
         }
 
         function handleBeforeUnload(event) {
-            // This is primarily for when the user closes the tab/browser
-            // The actual removal from the user list should ideally happen
-            // in a server-side function triggered by onDisconnect or by a
-            // periodic client-side check for inactive users.
-            // However, we can attempt a best-effort client-side removal here.
-            leaveRoom(true); // Pass true to skip screen transition if already closing
+            leaveRoom(true);
         }
-
 
         // Update UI based on Firestore data
         function updateUI(roomData) {
             const filmPlayer = document.getElementById('film');
 
-            // Update user list
             const userListElement = document.getElementById('user-list');
-            userListElement.innerHTML = ''; // Clear current list
+            userListElement.innerHTML = '';
             if (roomData.users) {
                 const usersArray = Object.keys(roomData.users);
                 usersArray.forEach(user => {
@@ -892,11 +877,9 @@
                 });
             }
 
-            // Update chat messages
             const chatMessagesElement = document.getElementById('chat-messages');
             if (roomData.messages && roomData.messages.length !== chatMessagesElement.children.length) {
-                // Only update if message count has changed to avoid re-rendering constantly
-                chatMessagesElement.innerHTML = ''; // Clear current chat
+                chatMessagesElement.innerHTML = '';
                 roomData.messages.forEach(msg => {
                     const messageDiv = document.createElement('div');
                     const senderSpan = document.createElement('span');
@@ -904,18 +887,16 @@
                     senderSpan.textContent = `${msg.sender}:`;
 
                     messageDiv.appendChild(senderSpan);
-                    messageDiv.appendChild(document.createTextNode(` ${msg.text}`)); // Use createTextNode for safety
+                    messageDiv.appendChild(document.createTextNode(` ${msg.text}`));
                     chatMessagesElement.appendChild(messageDiv);
                 });
-                chatMessagesElement.scrollTop = chatMessagesElement.scrollHeight; // Scroll to bottom
+                chatMessagesElement.scrollTop = chatMessagesElement.scrollHeight;
             }
 
-            // Sync video for clients
             if (myRole === 'client') {
                 const hostTime = roomData.currentFilmTime || 0;
                 const isPlaying = roomData.isPlaying || false;
 
-                // Only sync if difference is significant or playing state doesn't match
                 const timeDifference = Math.abs(filmPlayer.currentTime - hostTime);
                 if (timeDifference > 2 || (isPlaying && filmPlayer.paused) || (!isPlaying && !filmPlayer.paused)) {
                     filmPlayer.currentTime = hostTime;
@@ -928,18 +909,16 @@
             }
         }
 
-        // Send Chat Message (UPDATED FOR FIREBASE)
+        // Send Chat Message
         async function sendChatMessage(event) {
-            // Check if the event is from a keypress and if it's not the Enter key (to prevent accidental send on focus)
             if (event && event.type === 'keypress' && event.key !== 'Enter') {
                 return;
             }
-            // Allow sending on button click, or if Enter key is pressed without Shift (for new line)
             if (event && event.type === 'keypress' && event.key === 'Enter' && event.shiftKey) {
-                return; // Do nothing if Shift + Enter (allow new line)
+                return;
             }
             if (event && event.type === 'keypress' && event.key === 'Enter') {
-                event.preventDefault(); // Prevent default Enter key behavior (e.g., new line in textarea)
+                event.preventDefault();
             }
 
             const chatInput = document.getElementById('chat-input');
@@ -947,33 +926,23 @@
 
             if (messageText && myRoom) {
                 try {
-                    // This line expects window.firestoreDoc to be db.doc, which it is.
-                    const roomRef = window.firestoreDoc('rooms', myRoom); // Corrected: removed window.db as first argument in previous versions. This is correct.
+                    const roomRef = window.firestoreDoc('rooms', myRoom);
                     const newMessage = {
                         sender: myName,
                         text: messageText,
-                        timestamp: window.firestoreFieldValue.serverTimestamp() // Use server timestamp
+                        timestamp: window.firestoreFieldValue.serverTimestamp()
                     };
-                    // Use arrayUnion to add message to array without overwriting
                     await window.firestoreUpdateDoc(roomRef, {
                         messages: window.firestoreArrayUnion(newMessage)
                     });
-                    chatInput.value = ''; // Clear input
+                    chatInput.value = '';
                 } catch (e) {
                     console.error("Error sending message:", e);
                 }
             }
         }
 
-        // Listen for Enter key in chat input
-        document.addEventListener('DOMContentLoaded', () => {
-            const chatInput = document.getElementById('chat-input');
-            if (chatInput) {
-                chatInput.addEventListener('keypress', sendChatMessage);
-            }
-        });
-
-        // Leave Room (UPDATED FOR FIREBASE)
+        // Leave Room
         async function leaveRoom(force = false) {
             if (!myRoom) {
                 showScreen('main-menu');
@@ -982,47 +951,41 @@
 
             const filmPlayer = document.getElementById('film');
             filmPlayer.pause();
-            filmPlayer.src = ""; // Clear video source
+            filmPlayer.src = "";
 
-            // Unsubscribe from real-time updates
             if (unsubscribeFromRoomUpdates) {
                 unsubscribeFromRoomUpdates();
                 unsubscribeFromRoomUpdates = null;
             }
-            clearInterval(progressUpdateInterval); // Clear host's progress update interval
+            clearInterval(progressUpdateInterval);
             progressUpdateInterval = null;
 
             window.removeEventListener('beforeunload', handleBeforeUnload);
 
             try {
-                // This line expects window.firestoreDoc to be db.doc, which it is.
-                const roomRef = window.firestoreDoc('rooms', myRoom); // Corrected: removed window.db as first argument in previous versions. This is correct.
+                const roomRef = window.firestoreDoc('rooms', myRoom);
                 const docSnap = await window.firestoreGetDoc(roomRef);
 
                 if (docSnap.exists()) {
                     const roomData = docSnap.data();
 
                     if (myRole === 'host') {
-                        // If host leaves, delete the entire room
-                        // This line expects window.firestoreDoc to be db.doc, which it is.
-                        await window.firestoreDeleteDoc(window.firestoreDoc('rooms', myRoom)); // Corrected: removed window.db as first argument in previous versions. This is correct.
+                        await window.firestoreDeleteDoc(window.firestoreDoc('rooms', myRoom));
                         console.log(`Host ${myName} deleted room ${myRoom}`);
                     } else if (roomData.users && roomData.users[myName]) {
-                        // If client leaves, remove themselves from the user list
                         const userUpdate = {};
-                        userUpdate[`users.${myName}`] = window.firestoreFieldValue.delete(); // Correctly delete user field
+                        userUpdate[`users.${myName}`] = window.firestoreFieldValue.delete();
                         await window.firestoreUpdateDoc(roomRef, userUpdate);
                         console.log(`Client ${myName} left room ${myRoom}`);
                     }
                 }
             } catch (e) {
                 console.error("Error leaving room:", e);
-                // Continue to show main menu even if Firestore update fails
             } finally {
                 myRoom = null;
                 myRole = null;
                 myFilm = null;
-                if (!force) { // Only change screen if not forced (e.g., by beforeunload)
+                if (!force) {
                     showScreen('main-menu');
                 }
             }
