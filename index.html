@@ -1,904 +1,1082 @@
 <!DOCTYPE html>
-<html lang="en" >
-<head>
-  <meta charset="UTF-8">
-  <title>Untitled</title>
-  
-
-</head>
-<body>
-<!-- partial:index.partial.html -->
-<!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Films :D</title>
-  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
-  <style>
-    :root {
-        /* Define a richer, darker color palette */
-        --darkest-bg: #0a0a0a; /* Almost black */
-        --dark-bg: #1c1c1c;    /* Deep charcoal */
-        --medium-bg: #252525;   /* Slightly lighter charcoal for container */
-        --light-bg: #333333;   /* For elements like chat background */
-        --text-color: #f0f0f0; /* Soft white */
-        --accent-color: #00BFFF; /* Deep Sky Blue - New Accent Color */
-        --button-hover-color: #009ACD; /* Darker blue for hover */
-        --border-color: #444444; /* Darker border */
-        --shadow-color-dark: rgba(0, 0, 0, 0.7); /* More pronounced shadows */
-        --shadow-color-light: rgba(0, 0, 0, 0.4);
-        --chat-mention-color: #46D3FF; /* Lighter blue for mentions */
-        --error-color: #e53935; /* Red for errors */
-    }
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Films :D</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            /* Define a richer, darker color palette */
+            --darkest-bg: #0a0a0a; /* Almost black */
+            --dark-bg: #1c1c1c;    /* Deep charcoal */
+            --medium-bg: #252525;    /* Slightly lighter charcoal for container */
+            --light-bg: #333333;    /* For elements like chat background */
+            --text-color: #f0f0f0; /* Soft white */
+            --accent-color: #00BFFF; /* Deep Sky Blue - New Accent Color */
+            --button-hover-color: #009ACD; /* Darker blue for hover */
+            --border-color: #444444; /* Darker border */
+            --shadow-color-dark: rgba(0, 0, 0, 0.7); /* More pronounced shadows */
+            --shadow-color-light: rgba(0, 0, 0, 0.4);
+            --chat-mention-color: #46D3FF; /* Lighter blue for mentions */
+            --error-color: #e53935; /* Red for errors */
+        }
 
-    body {
-      font-family: 'Poppins', sans-serif;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      min-height: 100vh;
-      background-color: var(--darkest-bg);
-      color: var(--text-color);
-      margin: 0;
-      line-height: 1.6;
-      overflow-x: hidden; /* Prevent horizontal scroll on mobile */
-      position: relative; /* Needed for pseudo-element background */
-      z-index: 1; /* Ensure body content is above pseudo-element */
-    }
+        body {
+            font-family: 'Poppins', sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            background-color: var(--darkest-bg);
+            color: var(--text-color);
+            margin: 0;
+            line-height: 1.6;
+            overflow-x: hidden; /* Prevent horizontal scroll on mobile */
+            position: relative; /* Needed for pseudo-element background */
+            z-index: 1; /* Ensure body content is above pseudo-element */
+        }
 
-    /* Animated Background */
-    body::before {
-        content: '';
-        position: absolute;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        background: radial-gradient(circle at 10% 20%, rgba(0, 100, 150, 0.1) 0%, rgba(0, 0, 0, 0) 40%),
-                    radial-gradient(circle at 90% 80%, rgba(0, 150, 200, 0.15) 0%, rgba(0, 0, 0, 0) 40%),
-                    radial-gradient(circle at 40% 60%, rgba(0, 80, 130, 0.08) 0%, rgba(0, 0, 0, 0) 40%);
-        background-size: 200% 200%; /* Larger to allow movement */
-        animation: subtleBackgroundPan 40s linear infinite alternate; /* Slow, continuous pan */
-        z-index: -1; /* Place behind content */
-    }
+        /* Animated Background */
+        body::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: radial-gradient(circle at 10% 20%, rgba(0, 100, 150, 0.1) 0%, rgba(0, 0, 0, 0) 40%),
+                        radial-gradient(circle at 90% 80%, rgba(0, 150, 200, 0.15) 0%, rgba(0, 0, 0, 0) 40%),
+                        radial-gradient(circle at 40% 60%, rgba(0, 80, 130, 0.08) 0%, rgba(0, 0, 0, 0) 40%);
+            background-size: 200% 200%; /* Larger to allow movement */
+            animation: subtleBackgroundPan 40s linear infinite alternate; /* Slow, continuous pan */
+            z-index: -1; /* Place behind content */
+        }
 
-    @keyframes subtleBackgroundPan {
-        0% { background-position: 0% 0%; }
-        100% { background-position: 100% 100%; }
-    }
+        @keyframes subtleBackgroundPan {
+            0% { background-position: 0% 0%; }
+            100% { background-position: 100% 100%; }
+        }
 
-    .container {
-      text-align: center;
-      background: var(--medium-bg);
-      padding: 35px;
-      border-radius: 15px;
-      box-shadow: 0 10px 30px var(--shadow-color-dark);
-      width: 90%;
-      max-width: 950px; /* Slightly wider container */
-      position: relative;
-      border: 1px solid var(--border-color); /* Subtle border */
-      box-sizing: border-box; /* Include padding/border in width */
-      z-index: 2; /* Ensure container is above background */
-      transition: transform 0.3s ease-out, box-shadow 0.3s ease-out; /* Animation for screen transitions */
-    }
-    .hidden {
-      display: none !important;
-    }
-    h2, h3, h4 {
-        color: var(--accent-color);
-        margin-top: 0;
-        font-weight: 700; /* Bolder headings */
-        letter-spacing: 1px; /* More prominent letter spacing */
-        text-shadow: 0 0 5px rgba(0, 191, 255, 0.3); /* Subtle glow on titles */
-    }
-    h2 {
-        font-size: 2.2em;
-        margin-bottom: 25px;
-    }
-    h3 {
-        font-size: 1.8em;
-        margin-bottom: 20px;
-    }
-    p {
-        font-size: 1em;
-        color: var(--text-color);
-        margin-bottom: 15px;
-    }
-    input {
-      margin: 18px 0;
-      padding: 14px;
-      font-size: 1.05em;
-      width: calc(100% - 28px); /* Adjust for padding */
-      max-width: 380px; /* Wider inputs */
-      box-sizing: border-box;
-      background-color: var(--light-bg);
-      border: 1px solid var(--border-color);
-      border-radius: 8px;
-      color: var(--text-color);
-      transition: border-color 0.3s ease, box-shadow 0.3s ease, transform 0.2s ease; /* Added transform */
-    }
-    input::placeholder {
-        color: rgba(240, 240, 240, 0.5); /* Lighter placeholder */
-    }
-    input:focus {
-        border-color: var(--accent-color);
-        box-shadow: 0 0 12px rgba(0, 191, 255, 0.5); /* Stronger glow on focus */
-        outline: none;
-        background-color: var(--light-bg); /* Ensure background stays consistent */
-        transform: translateY(-2px); /* Slight lift on focus */
-    }
-    button {
-      margin: 18px 0;
-      padding: 14px 30px;
-      font-size: 1.1em;
-      background: linear-gradient(145deg, var(--accent-color), var(--button-hover-color)); /* Gradient background */
-      color: var(--dark-bg); /* Dark text on blue button */
-      border: none;
-      cursor: pointer;
-      width: calc(100% - 28px);
-      max-width: 380px;
-      border-radius: 8px;
-      font-weight: 700; /* Bolder text */
-      text-transform: uppercase; /* Uppercase text */
-      letter-spacing: 0.8px;
-      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.4); /* Button shadow */
-      transition: background 0.3s ease, transform 0.2s ease, box-shadow 0.3s ease;
-    }
-    button:hover {
-      background: linear-gradient(145deg, var(--button-hover-color), var(--accent-color));
-      transform: translateY(-3px);
-      box-shadow: 0 6px 15px rgba(0, 0, 0, 0.6);
-    }
-    button:active {
-        transform: translateY(0);
-        box-shadow: 0 2px 5px rgba(0, 0, 0, 0.4);
-    }
-    button[onclick*="main-menu"] { /* Specific style for "Back to Main Menu" buttons */
-      background: linear-gradient(145deg, #d32f2f, #a12a2a); /* Red gradient for back buttons */
-      color: var(--text-color);
-    }
-    button[onclick*="main-menu"]:hover {
-        background: linear-gradient(145deg, #a12a2a, #d32f2f);
-        transform: translateY(-3px);
-    }
-    #username-error, #create-error, #join-error {
-        color: var(--error-color);
-        font-weight: 600;
-        margin-top: -10px; /* Adjust spacing */
-        margin-bottom: 10px;
-        font-size: 0.9em;
-    }
+        .container {
+            text-align: center;
+            background: var(--medium-bg);
+            padding: 35px;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px var(--shadow-color-dark);
+            width: 90%;
+            max-width: 950px; /* Slightly wider container */
+            position: relative;
+            border: 1px solid var(--border-color); /* Subtle border */
+            box-sizing: border-box; /* Include padding/border in width */
+            z-index: 2; /* Ensure container is above background */
+            transition: transform 0.3s ease-out, box-shadow 0.3s ease-out; /* Animation for screen transitions */
+        }
+        .hidden {
+            display: none !important;
+        }
+        h2, h3, h4 {
+            color: var(--accent-color);
+            margin-top: 0;
+            font-weight: 700; /* Bolder headings */
+            letter-spacing: 1px; /* More prominent letter spacing */
+            text-shadow: 0 0 5px rgba(0, 191, 255, 0.3); /* Subtle glow on titles */
+        }
+        h2 {
+            font-size: 2.2em;
+            margin-bottom: 25px;
+        }
+        h3 {
+            font-size: 1.8em;
+            margin-bottom: 20px;
+        }
+        p {
+            font-size: 1em;
+            color: var(--text-color);
+            margin-bottom: 15px;
+        }
+        input {
+            margin: 18px 0;
+            padding: 14px;
+            font-size: 1.05em;
+            width: calc(100% - 28px); /* Adjust for padding */
+            max-width: 380px; /* Wider inputs */
+            box-sizing: border-box;
+            background-color: var(--light-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            color: var(--text-color);
+            transition: border-color 0.3s ease, box-shadow 0.3s ease, transform 0.2s ease; /* Added transform */
+        }
+        input::placeholder {
+            color: rgba(240, 240, 240, 0.5); /* Lighter placeholder */
+        }
+        input:focus {
+            border-color: var(--accent-color);
+            box-shadow: 0 0 12px rgba(0, 191, 255, 0.5); /* Stronger glow on focus */
+            outline: none;
+            background-color: var(--light-bg); /* Ensure background stays consistent */
+            transform: translateY(-2px); /* Slight lift on focus */
+        }
+        button {
+            margin: 18px 0;
+            padding: 14px 30px;
+            font-size: 1.1em;
+            background: linear-gradient(145deg, var(--accent-color), var(--button-hover-color)); /* Gradient background */
+            color: var(--dark-bg); /* Dark text on blue button */
+            border: none;
+            cursor: pointer;
+            width: calc(100% - 28px);
+            max-width: 380px;
+            border-radius: 8px;
+            font-weight: 700; /* Bolder text */
+            text-transform: uppercase; /* Uppercase text */
+            letter-spacing: 0.8px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.4); /* Button shadow */
+            transition: background 0.3s ease, transform 0.2s ease, box-shadow 0.3s ease;
+        }
+        button:hover {
+            background: linear-gradient(145deg, var(--button-hover-color), var(--accent-color));
+            transform: translateY(-3px);
+            box-shadow: 0 6px 15px rgba(0, 0, 0, 0.6);
+        }
+        button:active {
+            transform: translateY(0);
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.4);
+        }
+        button[onclick*="main-menu"] { /* Specific style for "Back to Main Menu" buttons */
+            background: linear-gradient(145deg, #d32f2f, #a12a2a); /* Red gradient for back buttons */
+            color: var(--text-color);
+        }
+        button[onclick*="main-menu"]:hover {
+            background: linear-gradient(145deg, #a12a2a, #d32f2f);
+            transform: translateY(-3px);
+        }
+        #username-error, #create-error, #join-error {
+            color: var(--error-color);
+            font-weight: 600;
+            margin-top: -10px; /* Adjust spacing */
+            margin-bottom: 10px;
+            font-size: 0.9em;
+        }
 
-    #room {
-      position: relative;
-      padding: 0;
-      box-sizing: border-box;
-    }
+        #room {
+            position: relative;
+            padding: 0;
+            box-sizing: border-box;
+        }
 
-    #room-content {
-      display: flex;
-      flex-direction: row;
-      gap: 40px; /* Increased gap */
-      text-align: left;
-      width: 100%;
-      justify-content: center;
-      align-items: flex-start;
-    }
+        #room-content {
+            display: flex;
+            flex-direction: row;
+            gap: 40px; /* Increased gap */
+            text-align: left;
+            width: 100%;
+            justify-content: center;
+            align-items: flex-start;
+        }
 
-    #film-chat-section {
-      flex: 3;
-      min-width: 350px; /* Slightly wider minimum for film/chat */
-    }
-    video {
-      width: 100%;
-      max-width: 650px; /* Wider video */
-      background-color: #000;
-      min-height: 280px; /* Taller video */
-      display: block;
-      margin: 0 auto 30px auto; /* More margin */
-      border-radius: 10px;
-      box-shadow: 0 8px 25px var(--shadow-color-dark); /* Deeper shadow */
-      border: 2px solid var(--border-color); /* Thicker border */
-      transition: box-shadow 0.3s ease, border-color 0.3s ease;
-    }
-    video:focus {
-        border-color: var(--accent-color);
-        box-shadow: 0 8px 25px var(--shadow-color-dark), 0 0 20px rgba(0, 191, 255, 0.7); /* Glow on video focus */
-        outline: none;
-    }
-    #chat {
-      background-color: var(--light-bg);
-      border: 1px solid var(--border-color);
-      border-radius: 10px;
-      padding: 20px;
-      margin-top: 30px;
-      text-align: left;
-      box-shadow: inset 0 3px 8px rgba(0, 0, 0, 0.3); /* Inner shadow for chat */
-    }
-    #chat h4 {
-        margin-bottom: 15px;
-        font-size: 1.3em;
-    }
-    #chat-messages {
-      max-height: 250px; /* Taller chat history */
-      overflow-y: auto;
-      border-bottom: 1px solid var(--border-color);
-      padding-bottom: 15px;
-      margin-bottom: 15px;
-      text-align: left;
-      font-size: 0.95em;
-      color: var(--text-color);
-      scrollbar-width: thin; /* Firefox */
-      scrollbar-color: var(--accent-color) var(--dark-bg); /* Firefox */
-    }
-    #chat-messages::-webkit-scrollbar { /* Webkit */
-        width: 8px;
-    }
-    #chat-messages::-webkit-scrollbar-track { /* Webkit */
-        background: var(--dark-bg);
-        border-radius: 10px;
-    }
-    #chat-messages::-webkit-scrollbar-thumb { /* Webkit */
-        background-color: var(--accent-color);
-        border-radius: 10px;
-        border: 2px solid var(--dark-bg);
-    }
-    #chat-messages div {
-        margin-bottom: 8px; /* More space between messages */
-        padding: 4px 0;
-        line-height: 1.4;
-    }
-    /* Chat user mention style */
-    .chat-sender {
-        font-weight: 700; /* Bolder sender name */
-        color: var(--chat-mention-color); /* Brighter blue highlight */
-        margin-right: 8px; /* More space after name */
-        text-shadow: 0 0 3px rgba(70, 211, 255, 0.4); /* Small glow on sender */
-    }
-    #chat-input {
-      width: calc(100% - 20px); /* Adjust for padding */
-      max-width: none;
-      resize: vertical;
-      min-height: 60px; /* Taller chat input */
-      font-size: 1em;
-      padding: 10px;
-      margin: 0;
-      background-color: var(--dark-bg); /* Darker input background */
-      border: 1px solid var(--border-color);
-      border-radius: 8px;
-      color: var(--text-color);
-      box-shadow: inset 0 1px 5px rgba(0, 0, 0, 0.5);
-      transition: border-color 0.3s ease, box-shadow 0.3s ease, transform 0.2s ease; /* Added transform */
-    }
-    #chat-input:focus {
-        border-color: var(--accent-color);
-        box-shadow: inset 0 1px 5px rgba(0, 0, 0, 0.5), 0 0 8px rgba(0, 191, 255, 0.3);
-        transform: translateY(-2px); /* Slight lift on focus */
-    }
-    #chat button {
-        margin-top: 15px;
-        width: 100%;
-        max-width: none;
-        padding: 12px;
-        font-size: 1em;
-    }
-
-
-    /* Floating User List Styles */
-    #floating-user-list-container {
-      position: absolute; /* Relative to #room */
-      top: 30px;
-      right: 30px;
-      background-color: rgba(30, 30, 30, 0.95); /* Slightly more opaque background */
-      border: 1px solid var(--border-color);
-      border-radius: 12px;
-      box-shadow: 0 6px 20px var(--shadow-color-dark);
-      padding: 15px;
-      width: 200px;
-      min-height: 60px;
-      z-index: 1000;
-      cursor: default; /* Change cursor back to default as it's not draggable */
-      overflow: hidden;
-      transition: width 0.3s ease-in-out, height 0.3s ease-in-out, background-color 0.3s ease-in-out, box-shadow 0.3s ease-in-out;
-    }
-
-    #floating-user-list-container.collapsed {
-      width: 40px;
-      height: 40px;
-      padding: 0;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      background-color: rgba(30, 30, 30, 0.8); /* Slightly more transparent when collapsed */
-    }
-    #floating-user-list-container.collapsed .toggle-handle {
-        width: 100%;
-        height: 100%;
-        border-bottom: none;
-    }
-
-    #floating-user-list-container.collapsed #user-list-content {
-      display: none;
-    }
-
-    #floating-user-list-container h4 {
-      margin-top: 0;
-      margin-bottom: 12px;
-      cursor: default; /* Not draggable, so default cursor */
-      color: var(--accent-color); /* Use accent color for title */
-      font-size: 1.25em; /* Slightly larger heading */
-      text-shadow: 0 0 5px rgba(0, 191, 255, 0.3);
-    }
-    #user-list {
-      list-style-type: none;
-      padding: 0;
-      margin: 0;
-      max-height: 280px;
-      overflow-y: auto;
-      font-size: 0.95em; /* Slightly larger text */
-      text-align: left;
-      color: var(--text-color);
-      scrollbar-width: thin;
-      scrollbar-color: var(--accent-color) var(--dark-bg);
-    }
-    #user-list::-webkit-scrollbar {
-        width: 8px;
-    }
-    #user-list::-webkit-scrollbar-track {
-        background: var(--dark-bg);
-        border-radius: 10px;
-    }
-    #user-list::-webkit-scrollbar-thumb {
-        background-color: var(--accent-color);
-        border-radius: 10px;
-        border: 2px solid var(--dark-bg);
-    }
-    #user-list li {
-      padding: 8px 0; /* More padding for list items */
-      border-bottom: 1px solid rgba(255,255,255,0.12); /* Slightly more visible separator */
-      word-wrap: break-word;
-      transition: color 0.2s ease;
-    }
-    #user-list li:hover {
-        color: var(--accent-color); /* Highlight on hover */
-    }
-    #user-list li:last-child {
-      border-bottom: none;
-    }
-
-    .toggle-handle {
-        position: absolute;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 40px;
-        background-color: rgba(0,0,0,0.3); /* Darker, more solid handle */
-        border-bottom: 1px solid rgba(255,255,255,0.08);
-        cursor: pointer;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        color: var(--chat-mention-color); /* Use a bright blue for the arrow */
-        font-size: 1.6em; /* Even larger arrow */
-        font-weight: bold;
-        transition: background-color 0.3s ease;
-        border-top-left-radius: 12px;
-        border-top-right-radius: 12px;
-    }
-    .toggle-handle:hover {
-        background-color: rgba(0,0,0,0.4);
-    }
-    .toggle-handle span {
-        transition: transform 0.3s ease;
-    }
-    .collapsed .toggle-handle span {
-        transform: rotate(90deg);
-    }
-    #floating-user-list-container:not(.collapsed) .toggle-handle {
-         border-bottom: 1px solid var(--border-color);
-    }
-    /* Ensure rounded corners apply correctly when collapsed */
-    .collapsed #floating-user-list-container {
-        border-bottom-left-radius: 12px;
-        border-bottom-right-radius: 12px;
-    }
+        #film-chat-section {
+            flex: 3;
+            min-width: 350px; /* Slightly wider minimum for film/chat */
+        }
+        video {
+            width: 100%;
+            max-width: 650px; /* Wider video */
+            background-color: #000;
+            min-height: 280px; /* Taller video */
+            display: block;
+            margin: 0 auto 30px auto; /* More margin */
+            border-radius: 10px;
+            box-shadow: 0 8px 25px var(--shadow-color-dark); /* Deeper shadow */
+            border: 2px solid var(--border-color); /* Thicker border */
+            transition: box-shadow 0.3s ease, border-color 0.3s ease;
+        }
+        video:focus {
+            border-color: var(--accent-color);
+            box-shadow: 0 8px 25px var(--shadow-color-dark), 0 0 20px rgba(0, 191, 255, 0.7); /* Glow on video focus */
+            outline: none;
+        }
+        #chat {
+            background-color: var(--light-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 10px;
+            padding: 20px;
+            margin-top: 30px;
+            text-align: left;
+            box-shadow: inset 0 3px 8px rgba(0, 0, 0, 0.3); /* Inner shadow for chat */
+        }
+        #chat h4 {
+            margin-bottom: 15px;
+            font-size: 1.3em;
+        }
+        #chat-messages {
+            max-height: 250px; /* Taller chat history */
+            overflow-y: auto;
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 15px;
+            margin-bottom: 15px;
+            text-align: left;
+            font-size: 0.95em;
+            color: var(--text-color);
+            scrollbar-width: thin; /* Firefox */
+            scrollbar-color: var(--accent-color) var(--dark-bg); /* Firefox */
+        }
+        #chat-messages::-webkit-scrollbar { /* Webkit */
+            width: 8px;
+        }
+        #chat-messages::-webkit-scrollbar-track { /* Webkit */
+            background: var(--dark-bg);
+            border-radius: 10px;
+        }
+        #chat-messages::-webkit-scrollbar-thumb { /* Webkit */
+            background-color: var(--accent-color);
+            border-radius: 10px;
+            border: 2px solid var(--dark-bg);
+        }
+        #chat-messages div {
+            margin-bottom: 8px; /* More space between messages */
+            padding: 4px 0;
+            line-height: 1.4;
+        }
+        /* Chat user mention style */
+        .chat-sender {
+            font-weight: 700; /* Bolder sender name */
+            color: var(--chat-mention-color); /* Brighter blue highlight */
+            margin-right: 8px; /* More space after name */
+            text-shadow: 0 0 3px rgba(70, 211, 255, 0.4); /* Small glow on sender */
+        }
+        #chat-input {
+            width: calc(100% - 20px); /* Adjust for padding */
+            max-width: none;
+            resize: vertical;
+            min-height: 60px; /* Taller chat input */
+            font-size: 1em;
+            padding: 10px;
+            margin: 0;
+            background-color: var(--dark-bg); /* Darker input background */
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            color: var(--text-color);
+            box-shadow: inset 0 1px 5px rgba(0, 0, 0, 0.5);
+            transition: border-color 0.3s ease, box-shadow 0.3s ease, transform 0.2s ease; /* Added transform */
+        }
+        #chat-input:focus {
+            border-color: var(--accent-color);
+            box-shadow: inset 0 1px 5px rgba(0, 0, 0, 0.5), 0 0 8px rgba(0, 191, 255, 0.3);
+            transform: translateY(-2px); /* Slight lift on focus */
+        }
+        #chat button {
+            margin-top: 15px;
+            width: 100%;
+            max-width: none;
+            padding: 12px;
+            font-size: 1em;
+        }
 
 
-    /* ==================================== */
-    /* Mobile-specific styles (Media Queries) */
-    /* ==================================== */
-    @media (max-width: 768px) {
-      .container {
-        padding: 15px;
-        width: 100%; /* Full width on small screens */
-        min-height: 100vh; /* Make sure container covers full height */
-        border-radius: 0;
-        box-shadow: none;
-        display: flex;
-        flex-direction: column;
-        justify-content: flex-start;
-      }
-      body {
-          align-items: flex-start; /* Align to top on mobile */
-      }
+        /* Floating User List Styles */
+        #floating-user-list-container {
+            position: absolute; /* Relative to #room */
+            top: 30px;
+            right: 30px;
+            background-color: rgba(30, 30, 30, 0.95); /* Slightly more opaque background */
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            box-shadow: 0 6px 20px var(--shadow-color-dark);
+            padding: 15px;
+            width: 200px;
+            min-height: 60px;
+            z-index: 1000;
+            cursor: default; /* Change cursor back to default as it's not draggable */
+            overflow: hidden;
+            transition: width 0.3s ease-in-out, height 0.3s ease-in-out, background-color 0.3s ease-in-out, box-shadow 0.3s ease-in-out;
+        }
 
-      h2 {
-          font-size: 1.8em;
-          margin-bottom: 20px;
-      }
-      h3 {
-          font-size: 1.5em;
-          margin-bottom: 15px;
-      }
-      p {
-          font-size: 0.9em;
-      }
-      input, button {
-        width: calc(100% - 20px); /* Adjust for 10px padding on each side */
-        margin: 10px 0;
-        padding: 12px;
-        font-size: 0.95em;
-      }
-      button {
-          padding: 10px 20px;
-      }
+        #floating-user-list-container.collapsed {
+            width: 40px;
+            height: 40px;
+            padding: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background-color: rgba(30, 30, 30, 0.8); /* Slightly more transparent when collapsed */
+        }
+        #floating-user-list-container.collapsed .toggle-handle {
+            width: 100%;
+            height: 100%;
+            border-bottom: none;
+        }
 
-      #room-content {
-        flex-direction: column;
-        gap: 20px;
-        align-items: center;
-      }
+        #floating-user-list-container.collapsed #user-list-content {
+            display: none;
+        }
 
-      #film-chat-section {
-        width: 100%;
-        min-width: unset;
-      }
+        #floating-user-list-container h4 {
+            margin-top: 0;
+            margin-bottom: 12px;
+            cursor: default; /* Not draggable, so default cursor */
+            color: var(--accent-color); /* Use accent color for title */
+            font-size: 1.25em; /* Slightly larger heading */
+            text-shadow: 0 0 5px rgba(0, 191, 255, 0.3);
+        }
+        #user-list {
+            list-style-type: none;
+            padding: 0;
+            margin: 0;
+            max-height: 280px;
+            overflow-y: auto;
+            font-size: 0.95em; /* Slightly larger text */
+            text-align: left;
+            color: var(--text-color);
+            scrollbar-width: thin;
+            scrollbar-color: var(--accent-color) var(--dark-bg);
+        }
+        #user-list::-webkit-scrollbar {
+            width: 8px;
+        }
+        #user-list::-webkit-scrollbar-track {
+            background: var(--dark-bg);
+            border-radius: 10px;
+        }
+        #user-list::-webkit-scrollbar-thumb {
+            background-color: var(--accent-color);
+            border-radius: 10px;
+            border: 2px solid var(--dark-bg);
+        }
+        #user-list li {
+            padding: 8px 0; /* More padding for list items */
+            border-bottom: 1px solid rgba(255,255,255,0.12); /* Slightly more visible separator */
+            word-wrap: break-word;
+            transition: color 0.2s ease;
+        }
+        #user-list li:hover {
+            color: var(--accent-color); /* Highlight on hover */
+        }
+        #user-list li:last-child {
+            border-bottom: none;
+        }
 
-      video {
-        max-width: 100%;
-        min-height: 180px; /* Smaller video height on mobile */
-        margin: 0 auto 20px auto;
-        border-radius: 8px; /* Slightly smaller border radius */
-      }
+        .toggle-handle {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 40px;
+            background-color: rgba(0,0,0,0.3); /* Darker, more solid handle */
+            border-bottom: 1px solid rgba(255,255,255,0.08);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--chat-mention-color); /* Use a bright blue for the arrow */
+            font-size: 1.6em; /* Even larger arrow */
+            font-weight: bold;
+            transition: background-color 0.3s ease;
+            border-top-left-radius: 12px;
+            border-top-right-radius: 12px;
+        }
+        .toggle-handle:hover {
+            background-color: rgba(0,0,0,0.4);
+        }
+        .toggle-handle span {
+            transition: transform 0.3s ease;
+        }
+        .collapsed .toggle-handle span {
+            transform: rotate(90deg);
+        }
+        #floating-user-list-container:not(.collapsed) .toggle-handle {
+                border-bottom: 1px solid var(--border-color);
+        }
+        /* Ensure rounded corners apply correctly when collapsed */
+        .collapsed #floating-user-list-container {
+                border-bottom-left-radius: 12px;
+                border-bottom-right-radius: 12px;
+        }
 
-      #chat {
-        margin-top: 20px;
-        width: 100%;
-        padding: 15px;
-        border-radius: 8px;
-      }
-      #chat h4 {
-          font-size: 1.1em;
-          margin-bottom: 10px;
-      }
-      #chat-messages {
-          max-height: 120px; /* Smaller chat history on mobile */
-          font-size: 0.85em;
-          padding-bottom: 10px;
-          margin-bottom: 10px;
-      }
-      #chat-input {
-          min-height: 40px;
-          font-size: 0.9em;
-          padding: 8px;
-      }
-      #chat button {
-          margin-top: 10px;
-          padding: 10px;
-      }
 
-      /* Adjust floating user list for mobile */
-      #floating-user-list-container {
-        position: fixed; /* Fixed relative to the viewport on mobile */
-        top: auto;
-        right: 10px;
-        bottom: 10px;
-        left: auto;
-        width: 120px; /* Smaller width for mobile */
-        padding: 8px;
-        z-index: 1001;
-        background-color: rgba(30, 30, 30, 0.95); /* More opaque */
-        box-shadow: 0 4px 10px rgba(0, 0, 0, 0.6);
-        border-radius: 10px;
-        transform: translate(0,0) !important; /* Reset any JS transform */
-      }
-      #floating-user-list-container.collapsed {
-        width: 35px; /* Slightly smaller collapsed size for mobile */
-        height: 35px;
-        padding: 0;
-        border-radius: 10px;
-      }
-      #floating-user-list-container h4 {
-        font-size: 0.9em;
-        margin-bottom: 8px;
-      }
-      #user-list {
-        max-height: 100px;
-        font-size: 0.75em;
-      }
-      .toggle-handle {
-        height: 35px; /* Adjust handle height for mobile */
-        font-size: 1.3em;
-        border-top-left-radius: 10px;
-        border-top-right-radius: 10px;
-      }
-       .collapsed #floating-user-list-container {
-        border-bottom-left-radius: 10px;
-        border-bottom-right-radius: 10px;
-       }
-    }
-  </style>
+        /* ==================================== */
+        /* Mobile-specific styles (Media Queries) */
+        /* ==================================== */
+        @media (max-width: 768px) {
+            .container {
+                padding: 20px; /* Slightly more padding */
+                width: 100%; /* Full width on small screens */
+                min-height: 100vh; /* Make sure container covers full height */
+                border-radius: 0;
+                box-shadow: none;
+                display: flex;
+                flex-direction: column;
+                justify-content: flex-start;
+            }
+            body {
+                align-items: flex-start; /* Align to top on mobile */
+            }
+
+            h2 {
+                font-size: 2em; /* Less reduction */
+                margin-bottom: 20px;
+            }
+            h3 {
+                font-size: 1.7em; /* Less reduction */
+                margin-bottom: 15px;
+            }
+            p {
+                font-size: 0.95em; /* Less reduction */
+            }
+            input {
+                width: calc(100% - 28px); /* Match desktop padding calculation */
+                margin: 15px 0; /* Less margin reduction */
+                padding: 14px; /* Match desktop padding */
+                font-size: 1em; /* Less reduction */
+            }
+            button {
+                width: calc(100% - 28px); /* Match desktop padding calculation */
+                margin: 15px 0; /* Less margin reduction */
+                padding: 14px 25px; /* Match desktop padding more closely */
+                font-size: 1em; /* Less reduction */
+            }
+
+            #room-content {
+                flex-direction: column;
+                gap: 25px; /* Less reduction in gap */
+                align-items: center;
+            }
+
+            #film-chat-section {
+                width: 100%;
+                min-width: unset;
+            }
+
+            video {
+                max-width: 100%;
+                min-height: 220px; /* Less reduction in video height */
+                margin: 0 auto 25px auto; /* Less margin reduction */
+                border-radius: 10px; /* Keep desktop border radius */
+            }
+
+            #chat {
+                margin-top: 25px; /* Less reduction */
+                width: 100%;
+                padding: 20px; /* Keep desktop padding */
+                border-radius: 10px; /* Keep desktop border radius */
+            }
+            #chat h4 {
+                font-size: 1.2em; /* Less reduction */
+                margin-bottom: 10px;
+            }
+            #chat-messages {
+                max-height: 180px; /* Less reduction in max height */
+                font-size: 0.9em; /* Less reduction */
+                padding-bottom: 10px;
+                margin-bottom: 10px;
+            }
+            #chat-input {
+                min-height: 50px; /* Less reduction */
+                font-size: 0.95em; /* Less reduction */
+                padding: 10px; /* Less reduction */
+            }
+            #chat button {
+                margin-top: 15px; /* Match desktop margin */
+                padding: 12px; /* Match desktop padding */
+            }
+
+            /* Adjust floating user list for mobile - aiming for desktop feel */
+            #floating-user-list-container {
+                position: fixed; /* Fixed relative to the viewport on mobile */
+                top: auto;
+                right: 15px; /* Slightly more distance from edge */
+                bottom: 15px; /* Slightly more distance from edge */
+                left: auto;
+                width: 160px; /* Wider for mobile */
+                padding: 12px; /* More padding */
+                z-index: 1001;
+                background-color: rgba(30, 30, 30, 0.95);
+                box-shadow: 0 4px 10px rgba(0, 0, 0, 0.6);
+                border-radius: 12px; /* Keep desktop border radius */
+                transform: translate(0,0) !important; /* Reset any JS transform */
+            }
+            #floating-user-list-container.collapsed {
+                width: 38px; /* Slightly larger collapsed size */
+                height: 38px; /* Match width */
+                padding: 0;
+                border-radius: 12px;
+            }
+            #floating-user-list-container h4 {
+                font-size: 1.1em; /* Less reduction */
+                margin-bottom: 10px; /* Slightly more margin */
+            }
+            #user-list {
+                max-height: 140px; /* More items visible */
+                font-size: 0.85em; /* Less reduction */
+            }
+            .toggle-handle {
+                height: 38px; /* Match collapsed height */
+                font-size: 1.5em; /* Less reduction */
+                border-top-left-radius: 12px;
+                border-top-right-radius: 12px;
+            }
+            .collapsed #floating-user-list-container {
+                border-bottom-left-radius: 12px;
+                border-bottom-right-radius: 12px;
+            }
+        }
+    </style>
 </head>
 <body>
 
-  <div class="container">
-    <div id="username-prompt" class="screen">
-      <h2>Ktb Smitk</h2>
-      <input type="text" id="username-input" placeholder="Enter your name" maxlength="12">
-      <button onclick="saveUsername()">Save</button>
-      <p id="username-error"></p>
-    </div>
-
-    <div id="main-menu" class="screen hidden">
-      <h2>Mrhba Bik :D</h2>
-      <p id="display-username"></p>
-      <button onclick="showScreen('create-room')">Tsyb Room</button>
-      <button onclick="showScreen('join-room')">Tdkhol Room</button>
-      <button onclick="changeUsername()">Tbdl Smiya</button>
-    </div>
-
-    <div id="create-room" class="screen hidden">
-      <h3>Tsyb Room</h3>
-      <input type="text" id="film-link" placeholder="Film Link">
-      <button onclick="createRoom()">Create</button>
-      <p id="create-error"></p>
-      <div id="created-room-info" class="hidden">
-        <p>Mbrok Hawa Code --> <span id="created-room-code"></span></p>
-        <button onclick="goToRoom()">Tbda Fraja?</button>
-      </div>
-      <button onclick="showScreen('main-menu')">Trj3</button>
-    </div>
-
-    <div id="join-room" class="screen hidden">
-      <h3>Tdkhol Room</h3>
-      <input type="text" id="join-code" placeholder="Room Code">
-      <button onclick="joinRoom()">Join</button>
-      <p id="join-error"></p>
-      <button onclick="showScreen('main-menu')">Trj3</button>
-    </div>
-
-    <div id="room" class="screen hidden">
-      <h3>Film Room (<span id="current-room-code"></span>)</h3>
-      <div id="room-content">
-        <div id="film-chat-section">
-          <video id="film" controls>
-            Your browser does not support the video tag.
-          </video>
-          <div id="chat">
-            <h4>Chat</h4>
-            <div id="chat-messages"></div>
-            <textarea id="chat-input" placeholder="Type a message..." rows="2"></textarea>
-            <button onclick="sendChatMessage(event)">Sift?</button>
-          </div>
+    <div class="container">
+        <div id="username-prompt" class="screen">
+            <h2>Ktb Smitk</h2>
+            <input type="text" id="username-input" placeholder="Enter your name" maxlength="12">
+            <button onclick="saveUsername()">Save</button>
+            <p id="username-error"></p>
         </div>
-        <div id="floating-user-list-container" class="hidden collapsed">
-            <div class="toggle-handle" onclick="toggleUserList()">
-                <span id="toggle-arrow">&#9654;</span> </div>
-            <div id="user-list-content">
-                <h4>Users</h4>
-                <ul id="user-list">
-                  </ul>
+
+        <div id="main-menu" class="screen hidden">
+            <h2>Mrhba Bik :D</h2>
+            <p id="display-username"></p>
+            <button onclick="showScreen('create-room')">Tsyb Room</button>
+            <button onclick="showScreen('join-room')">Tdkhol Room</button>
+            <button onclick="changeUsername()">Tbdl Smiya</button>
+        </div>
+
+        <div id="create-room" class="screen hidden">
+            <h3>Tsyb Room</h3>
+            <input type="text" id="film-link" placeholder="Film Link">
+            <button onclick="createRoom()">Create</button>
+            <p id="create-error"></p>
+            <div id="created-room-info" class="hidden">
+                <p>Mbrok Hawa Code --> <span id="created-room-code"></span></p>
+                <button onclick="goToRoom()">Tbda Fraja?</button>
             </div>
+            <button onclick="showScreen('main-menu')">Trj3</button>
         </div>
-      </div>
-      <button onclick="leaveRoom()">Tkhrj :(</button>
+
+        <div id="join-room" class="screen hidden">
+            <h3>Tdkhol Room</h3>
+            <input type="text" id="join-code" placeholder="Room Code">
+            <button onclick="joinRoom()">Join</button>
+            <p id="join-error"></p>
+            <button onclick="showScreen('main-menu')">Trj3</button>
+        </div>
+
+        <div id="room" class="screen hidden">
+            <h3>Film Room (<span id="current-room-code"></span>)</h3>
+            <div id="room-content">
+                <div id="film-chat-section">
+                    <video id="film" controls>
+                        Your browser does not support the video tag.
+                    </video>
+                    <div id="chat">
+                        <h4>Chat</h4>
+                        <div id="chat-messages"></div>
+                        <textarea id="chat-input" placeholder="Type a message..." rows="2"></textarea>
+                        <button onclick="sendChatMessage(event)">Sift?</button>
+                    </div>
+                </div>
+                <div id="floating-user-list-container" class="hidden collapsed">
+                    <div class="toggle-handle" onclick="toggleUserList()">
+                        <span id="toggle-arrow">&#9654;</span> </div>
+                    <div id="user-list-content">
+                        <h4>Users</h4>
+                        <ul id="user-list">
+                        </ul>
+                    </div>
+                </div>
+            </div>
+            <button onclick="leaveRoom()">Tkhrj :(</button>
+        </div>
     </div>
-  </div>
 
-  <script>
-    let myName = localStorage.getItem('movieroom_myName') || "";
-    let myRoom = null;
-    let myRole = null; // 'host' or 'client'
-    let myFilm = null;
-    let progressUpdateInterval = null;
+    <script type="module">
+        // Import the functions you need from the SDKs you need
+        // Using 'compat' versions for simpler integration in an existing script
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js";
+        import { getFirestore, collection, doc, setDoc, getDoc, updateDoc, arrayUnion, onSnapshot, FieldValue } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js";
+        import { getAnalytics } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-analytics-compat.js"; // Optional
 
-    // --- Helper function to show/hide screens ---
-    function showScreen(screenId) {
-      document.querySelectorAll('.screen').forEach(screen => {
-        screen.classList.add('hidden');
-      });
-      document.getElementById(screenId).classList.remove('hidden');
+        // Your web app's Firebase configuration (Make sure this matches yours exactly)
+        const firebaseConfig = {
+            apiKey: "AIzaSyDAMUy4gvPqW9b9k1Sf5EwelR_lNFk2LCs",
+            authDomain: "films-f40a3.firebaseapp.com",
+            projectId: "films-f40a3",
+            storageBucket: "films-f40a3.firebaseapp.com",
+            messagingSenderId: "606093930517",
+            appId: "1:606093930517:web:f4c809139282c2bba9de1c",
+            measurementId: "G-J8BT60XT2H" // Optional
+        };
 
-      // Show/hide floating user list based on active screen
-      if (screenId === 'room') {
-        document.getElementById('floating-user-list-container').classList.add('collapsed');
-        document.getElementById('toggle-arrow').innerHTML = '&#9654;'; // Right arrow
-        document.getElementById('floating-user-list-container').classList.remove('hidden');
-      } else {
-        document.getElementById('floating-user-list-container').classList.add('hidden');
-        clearInterval(progressUpdateInterval); // Stop interval when leaving room
-      }
-    }
+        // Initialize Firebase
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app); // Get a reference to the Firestore database
+        const analytics = getAnalytics(app); // Initialize analytics (optional)
 
-    // --- Username logic ---
-    function checkUsername() {
-      if (myName) {
-        document.getElementById('display-username').textContent = `Welcome, ${myName}!`;
-        showScreen('main-menu');
-      } else {
-        showScreen('username-prompt');
-      }
-    }
+        // Make 'db' and necessary Firestore functions globally accessible
+        // This allows your main script block to use them directly
+        window.db = db;
+        window.firestoreCollection = collection;
+        window.firestoreDoc = doc;
+        window.firestoreSetDoc = setDoc;
+        window.firestoreGetDoc = getDoc;
+        window.firestoreUpdateDoc = updateDoc;
+        window.firestoreArrayUnion = arrayUnion;
+        window.firestoreOnSnapshot = onSnapshot; // For real-time updates
+        window.firestoreFieldValue = FieldValue; // For operations like deleting fields or setting server timestamps
+    </script>
 
-    // --- Initial check when the page loads ---
-    window.onload = function() {
-      checkUsername();
-    };
+    <script>
+        let myName = localStorage.getItem('movieroom_myName') || "";
+        let myRoom = null;
+        let myRole = null; // 'host' or 'client'
+        let myFilm = null;
+        let progressUpdateInterval = null; // This interval is now largely replaced by onSnapshot
+        let unsubscribeFromRoomUpdates = null; // To stop Firestore real-time listener
 
-    // Save Username
-    function saveUsername() {
-      let val = document.getElementById('username-input').value.trim();
-      if (!val || val.length > 12) {
-        document.getElementById('username-error').innerText = "Enter a name (max 12 characters)";
-        return;
-      }
-      myName = val;
-      localStorage.setItem('movieroom_myName', myName);
-      document.getElementById('username-error').innerText = "";
-      document.getElementById('display-username').textContent = `Welcome, ${myName}!`;
-      showScreen('main-menu');
-    }
+        // --- Helper function to show/hide screens ---
+        function showScreen(screenId) {
+            document.querySelectorAll('.screen').forEach(screen => {
+                screen.classList.add('hidden');
+            });
+            document.getElementById(screenId).classList.remove('hidden');
 
-    // Change Username
-    function changeUsername() {
-      document.getElementById('username-input').value = myName;
-      document.getElementById('username-error').innerText = '';
-      showScreen('username-prompt');
-    }
-
-    // --- Room logic ---
-    function generateRoomCode() {
-      return Math.random().toString(36).substr(2, 4).toUpperCase();
-    }
-
-    function createRoom() {
-      let url = document.getElementById('film-link').value.trim();
-      if (!url) {
-        document.getElementById('create-error').innerText = "Please enter a film link!";
-        return;
-      }
-      const code = generateRoomCode();
-      const roomInfo = {
-        film: url,
-        host: myName,
-        messages: [],
-        users: {
-          [myName]: { currentTime: 0, lastUpdate: Date.now() }
+            // Show/hide floating user list based on active screen
+            if (screenId === 'room') {
+                document.getElementById('floating-user-list-container').classList.add('collapsed');
+                document.getElementById('toggle-arrow').innerHTML = '&#9654;'; // Right arrow
+                document.getElementById('floating-user-list-container').classList.remove('hidden');
+            } else {
+                document.getElementById('floating-user-list-container').classList.add('hidden');
+                // IMPORTANT: Stop the Firestore listener when leaving the room screen
+                if (unsubscribeFromRoomUpdates) {
+                    unsubscribeFromRoomUpdates();
+                    unsubscribeFromRoomUpdates = null; // Clear the reference
+                }
+                 // Clear any setInterval if it's still running (it shouldn't be much now)
+                clearInterval(progressUpdateInterval); 
+                progressUpdateInterval = null;
+            }
         }
-      };
-      localStorage.setItem(`room-${code}`, JSON.stringify(roomInfo));
-      document.getElementById('created-room-code').innerText = code;
-      document.getElementById('created-room-info').classList.remove('hidden');
-      document.getElementById('create-error').innerText = "";
-    }
 
-    function goToRoom() {
-      myRole = 'host';
-      myRoom = document.getElementById('created-room-code').innerText;
-      myFilm = document.getElementById('film-link').value.trim();
-      enterRoom();
-    }
+        // --- Username logic ---
+        function checkUsername() {
+            if (myName) {
+                document.getElementById('display-username').textContent = `Welcome, ${myName}!`;
+                showScreen('main-menu');
+            } else {
+                showScreen('username-prompt');
+            }
+        }
 
-    function joinRoom() {
-      const code = document.getElementById('join-code').value.trim().toUpperCase();
-      let roomData = JSON.parse(localStorage.getItem(`room-${code}`));
+        // --- Initial check when the page loads ---
+        window.onload = function() {
+            checkUsername();
+        };
 
-      if (!roomData) {
-        document.getElementById('join-error').innerText = "Room not found!";
-        return;
-      }
+        // Save Username
+        function saveUsername() {
+            let val = document.getElementById('username-input').value.trim();
+            if (!val || val.length > 12) {
+                document.getElementById('username-error').innerText = "Enter a name (max 12 characters)";
+                return;
+            }
+            myName = val;
+            localStorage.setItem('movieroom_myName', myName); // Username still uses localStorage
+            document.getElementById('username-error').innerText = "";
+            document.getElementById('display-username').textContent = `Welcome, ${myName}!`;
+            showScreen('main-menu');
+        }
 
-      myRole = 'client';
-      myRoom = code;
-      myFilm = roomData.film;
+        // Change Username
+        function changeUsername() {
+            document.getElementById('username-input').value = myName;
+            document.getElementById('username-error').innerText = '';
+            showScreen('username-prompt');
+        }
 
-      if (!roomData.users) {
-        roomData.users = {};
-      }
-      if (!roomData.users[myName]) {
-        roomData.users[myName] = { currentTime: 0, lastUpdate: Date.now() };
-        localStorage.setItem(`room-${myRoom}`, JSON.stringify(roomData));
-      }
+        // --- Room logic ---
+        function generateRoomCode() {
+            return Math.random().toString(36).substr(2, 4).toUpperCase();
+        }
 
-      document.getElementById('join-error').innerText = "";
-      enterRoom();
-    }
+        // Create Room (UPDATED FOR FIREBASE)
+        async function createRoom() { // Made async
+            let url = document.getElementById('film-link').value.trim();
+            if (!url) {
+                document.getElementById('create-error').innerText = "Please enter a film link!";
+                return;
+            }
+            const code = generateRoomCode();
+            
+            try {
+                // Check if room code already exists (optional, but good practice)
+                const roomRef = window.firestoreDoc(window.db, 'rooms', code);
+                const docSnap = await window.firestoreGetDoc(roomRef);
+                if (docSnap.exists()) {
+                    document.getElementById('create-error').innerText = "Room code already exists. Please try creating again.";
+                    return; // Try again to generate a new code
+                }
 
-    function enterRoom() {
-      showScreen('room');
-      document.getElementById('current-room-code').textContent = myRoom;
-      const filmElement = document.getElementById('film');
-      filmElement.src = myFilm;
-
-      loadChatMessages();
-      updateUserList(); // Initial update of the user list immediately
-      startProgressUpdates();
-    }
-
-    function leaveRoom() {
-      clearInterval(progressUpdateInterval);
-      // Remove self from the room's user list in localStorage
-      let roomData = JSON.parse(localStorage.getItem(`room-${myRoom}`));
-      if (roomData && roomData.users && roomData.users[myName]) {
-        delete roomData.users[myName];
-        localStorage.setItem(`room-${myRoom}`, JSON.stringify(roomData));
-      }
-
-      myRoom = null;
-      myRole = null;
-      myFilm = null;
-      document.getElementById('film').src = "";
-      document.getElementById('chat-messages').innerHTML = '';
-      document.getElementById('user-list').innerHTML = '';
-      showScreen('main-menu');
-    }
-
-    // --- Chat functionality ---
-    const chatInput = document.getElementById('chat-input');
-    const chatMessagesDiv = document.getElementById('chat-messages');
-
-    function loadChatMessages() {
-      const roomData = JSON.parse(localStorage.getItem(`room-${myRoom}`));
-      chatMessagesDiv.innerHTML = '';
-      if (roomData && roomData.messages) {
-        roomData.messages.forEach(msg => {
-          const msgDiv = document.createElement('div');
-          const senderSpan = document.createElement('span');
-          senderSpan.classList.add('chat-sender');
-          senderSpan.textContent = `${msg.sender}: `;
-          msgDiv.appendChild(senderSpan);
-          msgDiv.append(document.createTextNode(msg.text)); // Append text node for message content
-          chatMessagesDiv.appendChild(msgDiv);
-        });
-      }
-      chatMessagesDiv.scrollTop = chatMessagesDiv.scrollHeight;
-    }
-
-    function sendChatMessage(e) {
-      e.preventDefault();
-      const text = chatInput.value.trim();
-      if (!text || !myRoom || !myName) return;
-
-      const msgObj = {
-        sender: myName,
-        text: text,
-        timestamp: Date.now()
-      };
-
-      const roomData = JSON.parse(localStorage.getItem(`room-${myRoom}`));
-      if (roomData) {
-        roomData.messages.push(msgObj);
-        localStorage.setItem(`room-${myRoom}`, JSON.stringify(roomData));
-      }
-
-      const msgDiv = document.createElement('div');
-      const senderSpan = document.createElement('span');
-      senderSpan.classList.add('chat-sender');
-      senderSpan.textContent = `${msgObj.sender}: `;
-      msgDiv.appendChild(senderSpan);
-      msgDiv.append(document.createTextNode(msgObj.text)); // Append text node for message content
-      chatMessagesDiv.appendChild(msgDiv);
-      chatInput.value = '';
-      chatMessagesDiv.scrollTop = chatMessagesDiv.scrollHeight;
-    }
-
-    chatInput.addEventListener('input', () => {
-      chatInput.style.height = 'auto';
-      chatInput.style.height = Math.min(chatInput.scrollHeight, 192) + 'px';
-    });
-
-    // --- User List and Progress Tracking ---
-    const filmElement = document.getElementById('film');
-    const floatingUserList = document.getElementById('floating-user-list-container');
-    const roomElement = document.getElementById('room'); // Get the room element
-
-    function formatTime(seconds) {
-      if (isNaN(seconds) || seconds < 0) return '00:00';
-      const h = Math.floor(seconds / 3600);
-      const m = Math.floor((seconds % 3600) / 60);
-      const s = Math.floor(seconds % 60);
-      return [h, m, s]
-        .map(v => v < 10 ? '0' + v : v)
-        .filter((v, i) => v !== '00' || i > 0 || h > 0)
-        .join(':') || '00:00';
-    }
-
-    function updateUserProgress() {
-        if (!myRoom || !myName || filmElement.readyState < 2) return;
-
-        let roomData = JSON.parse(localStorage.getItem(`room-${myRoom}`));
-        if (roomData && roomData.users) {
-            if (filmElement.paused === false || roomData.users[myName].currentTime !== filmElement.currentTime) {
-                roomData.users[myName] = {
-                    currentTime: filmElement.currentTime,
-                    lastUpdate: Date.now()
+                const roomInfo = {
+                    film: url,
+                    host: myName,
+                    messages: [], // Empty array for chat messages
+                    users: { // Initial user, the host
+                        [myName]: { currentTime: 0, lastUpdate: window.firestoreFieldValue.serverTimestamp() }
+                    },
+                    // Add a global currentFilmTime to sync host's position primarily
+                    currentFilmTime: 0,
+                    isPlaying: false // New: Track if the host's video is playing
                 };
-                localStorage.setItem(`room-${myRoom}`, JSON.stringify(roomData));
+                
+                // Save room info to Firestore
+                await window.firestoreSetDoc(roomRef, roomInfo);
+
+                document.getElementById('created-room-code').innerText = code;
+                document.getElementById('created-room-info').classList.remove('hidden');
+                document.getElementById('create-error').innerText = "";
+                myRole = 'host'; // Set role here
+                myRoom = code; // Set myRoom
+                myFilm = url; // Set myFilm
+
+            } catch (e) {
+                console.error("Error creating room:", e);
+                document.getElementById('create-error').innerText = "Failed to create room. Please try again.";
             }
         }
-    }
 
-    function updateUserList() {
-      const userListElement = document.getElementById('user-list');
-      userListElement.innerHTML = '';
+        function goToRoom() {
+            // myRole, myRoom, myFilm are already set in createRoom()
+            enterRoom();
+        }
 
-      const roomData = JSON.parse(localStorage.getItem(`room-${myRoom}`));
-      if (roomData && roomData.users) {
-        const users = Object.keys(roomData.users).sort();
+        // Join Room (UPDATED FOR FIREBASE)
+        async function joinRoom() { // Made async
+            const code = document.getElementById('join-code').value.trim().toUpperCase();
+            
+            try {
+                const roomRef = window.firestoreDoc(window.db, 'rooms', code);
+                const docSnap = await window.firestoreGetDoc(roomRef);
 
-        users.forEach(username => {
-          const userData = roomData.users[username];
-          const listItem = document.createElement('li');
-          const currentTimeFormatted = formatTime(userData.currentTime);
-          let userStatus = `${username} (${currentTimeFormatted})`;
+                if (!docSnap.exists()) {
+                    document.getElementById('join-error').innerText = "Room not found!";
+                    return;
+                }
 
-          if (username === myName) {
-            userStatus = `(You) ${userStatus}`;
-          }
-          if (roomData.host === username) {
-            userStatus = `(Host) ${userStatus}`;
-          }
+                const roomData = docSnap.data();
 
-          listItem.textContent = userStatus;
-          userListElement.appendChild(listItem);
+                myRole = 'client';
+                myRoom = code;
+                myFilm = roomData.film;
+
+                // Add current user to the room's users list if not already there
+                if (!roomData.users || !roomData.users[myName]) {
+                    const updatedUsers = { ...roomData.users, [myName]: { currentTime: roomData.currentFilmTime || 0, lastUpdate: window.firestoreFieldValue.serverTimestamp() } };
+                    await window.firestoreUpdateDoc(roomRef, { users: updatedUsers });
+                }
+
+                document.getElementById('join-error').innerText = "";
+                enterRoom();
+
+            } catch (e) {
+                console.error("Error joining room:", e);
+                document.getElementById('join-error').innerText = "Failed to join room. Please try again.";
+            }
+        }
+
+        function enterRoom() {
+            showScreen('room');
+            document.getElementById('current-room-code').textContent = myRoom;
+            const filmElement = document.getElementById('film');
+            filmElement.src = myFilm;
+
+            // NEW: Start the real-time listener for this room
+            startRealtimeUpdates(myRoom);
+
+            // Optional: Add event listeners for video play/pause/seek for host sync
+            if (myRole === 'host') {
+                filmElement.onplay = () => updateFilmState(myRoom, true, filmElement.currentTime);
+                filmElement.onpause = () => updateFilmState(myRoom, false, filmElement.currentTime);
+                filmElement.ontimeupdate = () => {
+                    // Only update frequently if host and film is playing
+                    if (myRole === 'host' && !filmElement.paused) {
+                        updateUserProgress(); // This will now update Firestore for host's own progress
+                    }
+                };
+                filmElement.onseeking = () => updateFilmState(myRoom, filmElement.paused, filmElement.currentTime);
+            } else {
+                // For clients, prevent manual control to rely on host sync
+                filmElement.onplay = () => { if (myRole === 'client') filmElement.pause(); }; 
+                filmElement.onpause = () => { if (myRole === 'client') filmElement.play(); }; 
+                filmElement.onseeking = () => { if (myRole === 'client') filmElement.currentTime = filmElement.currentTime; }; 
+            }
+        }
+
+        // Leave Room (UPDATED FOR FIREBASE)
+        async function leaveRoom() { // Made async
+            // Stop the Firestore listener
+            if (unsubscribeFromRoomUpdates) {
+                unsubscribeFromRoomUpdates();
+                unsubscribeFromRoomUpdates = null;
+            }
+
+            // Remove self from the room's user list in Firestore
+            if (myRoom && myName) {
+                try {
+                    const roomRef = window.firestoreDoc(window.db, 'rooms', myRoom);
+                    const docSnap = await window.firestoreGetDoc(roomRef);
+                    if (docSnap.exists()) {
+                        let roomData = docSnap.data();
+                        if (roomData.users && roomData.users[myName]) {
+                            // Create a new users object without the current user
+                            const updatedUsers = { ...roomData.users };
+                            delete updatedUsers[myName];
+                            
+                            // If host is leaving, and no other users, you might want to delete the room
+                            if (myRole === 'host' && Object.keys(updatedUsers).length === 0) {
+                                // OPTIONAL: If host leaves and no one else is there, delete the room
+                                // This cleans up your Firestore database
+                                // await window.firestoreDeleteDoc(roomRef); 
+                                // For now, we'll just update users if not deleting
+                                console.log("Host left, no users remaining. Room can be considered inactive.");
+                                await window.firestoreUpdateDoc(roomRef, { users: updatedUsers, isPlaying: false, currentFilmTime: 0 }); // Clear state
+                            } else {
+                                // Just update the user list in the existing room
+                                 await window.firestoreUpdateDoc(roomRef, { users: updatedUsers });
+                            }
+                        }
+                    }
+                } catch (e) {
+                    console.error("Error leaving room / updating user list:", e);
+                }
+            }
+
+            myRoom = null;
+            myRole = null;
+            myFilm = null;
+            document.getElementById('film').src = "";
+            document.getElementById('chat-messages').innerHTML = '';
+            document.getElementById('user-list').innerHTML = '';
+            showScreen('main-menu');
+        }
+
+        // --- Chat functionality ---
+        const chatInput = document.getElementById('chat-input');
+        const chatMessagesDiv = document.getElementById('chat-messages');
+
+        // Load/Render Chat Messages (Called by real-time listener)
+        function renderChatMessages(messages) { // Renamed from loadChatMessages
+            chatMessagesDiv.innerHTML = ''; // Clear existing messages
+            if (messages) {
+                messages.forEach(msg => {
+                    const msgDiv = document.createElement('div');
+                    const senderSpan = document.createElement('span');
+                    senderSpan.classList.add('chat-sender');
+                    senderSpan.textContent = `${msg.sender}: `;
+                    msgDiv.appendChild(senderSpan);
+                    msgDiv.append(document.createTextNode(msg.text));
+                    chatMessagesDiv.appendChild(msgDiv);
+                });
+            }
+            chatMessagesDiv.scrollTop = chatMessagesDiv.scrollHeight; // Scroll to bottom
+        }
+
+        // Send Chat Message (UPDATED FOR FIREBASE)
+        async function sendChatMessage(e) { // Made async
+            e.preventDefault();
+            const text = chatInput.value.trim();
+            if (!text || !myRoom || !myName) return;
+
+            const msgObj = {
+                sender: myName,
+                text: text,
+                timestamp: window.firestoreFieldValue.serverTimestamp() // Use server timestamp
+            };
+
+            try {
+                const roomRef = window.firestoreDoc(window.db, 'rooms', myRoom);
+                // Use arrayUnion to add message to the messages array in Firestore
+                await window.firestoreUpdateDoc(roomRef, {
+                    messages: window.firestoreArrayUnion(msgObj)
+                });
+
+                chatInput.value = ''; // Clear input after sending
+                // The real-time listener will now update the chatMessagesDiv
+                // No need to manually append here if onSnapshot is properly handling updates
+            } catch (e) {
+                console.error("Error sending message:", e);
+            }
+        }
+
+        chatInput.addEventListener('input', () => {
+            chatInput.style.height = 'auto';
+            chatInput.style.height = Math.min(chatInput.scrollHeight, 192) + 'px';
         });
-      }
-    }
 
-    function startProgressUpdates() {
-      clearInterval(progressUpdateInterval);
-      progressUpdateInterval = setInterval(() => {
-        updateUserProgress();
-        updateUserList();
-      }, 2000);
-    }
+        // --- User List and Progress Tracking ---
+        const filmElement = document.getElementById('film');
+        const floatingUserList = document.getElementById('floating-user-list-container');
+        const roomElement = document.getElementById('room'); 
 
-    // --- Floating User List Toggle ---
-    function toggleUserList() {
-        floatingUserList.classList.toggle('collapsed');
-        const arrow = document.querySelector('#floating-user-list-container .toggle-handle span');
-        if (floatingUserList.classList.contains('collapsed')) {
-            arrow.innerHTML = '&#9654;'; // Right arrow when collapsed
-        } else {
-            arrow.innerHTML = '&#9664;'; // Left arrow when expanded
+        function formatTime(seconds) {
+            if (isNaN(seconds) || seconds < 0) return '00:00';
+            const h = Math.floor(seconds / 3600);
+            const m = Math.floor((seconds % 3600) / 60);
+            const s = Math.floor(seconds % 60);
+            return [h, m, s]
+                .map(v => v < 10 ? '0' + v : v)
+                .filter((v, i) => v !== '00' || i > 0 || h > 0)
+                .join(':') || '00:00';
         }
-    }
 
-    // --- Fullscreen API handling ---
-    document.addEventListener('fullscreenchange', handleFullscreenChange);
-    document.addEventListener('webkitfullscreenchange', handleFullscreenChange); /* Safari */
-    document.addEventListener('mozfullscreenchange', handleFullscreenChange);   /* Firefox */
-    document.addEventListener('MSFullscreenChange', handleFullscreenChange);   /* IE/Edge */
+        // Update User Progress (UPDATED FOR FIREBASE)
+        // This function will now ONLY update the *current user's* own progress
+        async function updateUserProgress() {
+            if (!myRoom || !myName || filmElement.readyState < 2) return;
 
-    function handleFullscreenChange() {
-        const userListContainer = document.getElementById('floating-user-list-container');
-        // Check if *any* element is currently in fullscreen mode
-        if (document.fullscreenElement || document.webkitFullscreenElement || document.mozFullScreenElement || document.msFullscreenElement) {
-            // If the video (or any part of the document) goes fullscreen, hide the user list.
-            userListContainer.classList.add('hidden');
-        } else {
-            // If exiting fullscreen, and we are on the 'room' screen, show the user list.
-            if (!document.getElementById('room').classList.contains('hidden')) {
-                userListContainer.classList.remove('hidden');
+            try {
+                const roomRef = window.firestoreDoc(window.db, 'rooms', myRoom);
+                // Update only this user's current time and last update
+                const updateData = {
+                    [`users.${myName}.currentTime`]: filmElement.currentTime,
+                    [`users.${myName}.lastUpdate`]: window.firestoreFieldValue.serverTimestamp()
+                };
+
+                // If I am the host, also update the global film time and playing state
+                if (myRole === 'host') {
+                    updateData.currentFilmTime = filmElement.currentTime;
+                    updateData.isPlaying = !filmElement.paused;
+                }
+
+                await window.firestoreUpdateDoc(roomRef, updateData);
+            } catch (e) {
+                console.error("Error updating user/host progress:", e);
             }
         }
-    }
-  </script>
 
-</body>
-</html>
-<!-- partial -->
-  
+        // Render User List (Called by real-time listener)
+        function renderUserList(usersData, hostName) { // Renamed from updateUserList
+            const userListElement = document.getElementById('user-list');
+            userListElement.innerHTML = '';
+
+            if (usersData) {
+                const users = Object.keys(usersData).sort();
+
+                users.forEach(username => {
+                    const userData = usersData[username];
+                    const listItem = document.createElement('li');
+                    const currentTimeFormatted = formatTime(userData.currentTime || 0); // Handle potential undefined currentTime
+                    let userStatus = `${username} (${currentTimeFormatted})`;
+
+                    if (username === myName) {
+                        userStatus = `(You) ${userStatus}`;
+                    }
+                    if (hostName === username) { // Use hostName passed from roomData
+                        userStatus = `(Host) ${userStatus}`;
+                    }
+
+                    listItem.textContent = userStatus;
+                    userListElement.appendChild(listItem);
+                });
+            }
+        }
+
+        // NEW: Real-time Listener function (replaces setInterval for updates)
+        function startRealtimeUpdates(roomCode) {
+            // Clear any previous listener
+            if (unsubscribeFromRoomUpdates) {
+                unsubscribeFromRoomUpdates();
+            }
+
+            // Listen for changes to the specific room document
+            const roomRef = window.firestoreDoc(window.db, 'rooms', roomCode);
+            unsubscribeFromRoomUpdates = window.firestoreOnSnapshot(roomRef, (docSnapshot) => {
+                if (docSnapshot.exists()) {
+                    const roomData = docSnapshot.data();
+                    
+                    // Update film player source if it's different (shouldn't change often)
+                    if (filmElement.src !== roomData.film && roomData.film) {
+                        filmElement.src = roomData.film;
+                    }
+
+                    // Sync film time for clients (and potentially for host if they seek manually)
+                    // This is a basic sync. More advanced sync involves buffering, play/pause states etc.
+                    // Sync if time diff > 1.5s OR if play/pause state mismatch AND current user is NOT host
+                    if (Math.abs(filmElement.currentTime - (roomData.currentFilmTime || 0)) > 1.5 || (myRole !== 'host' && (filmElement.paused !== !roomData.isPlaying))) { 
+                        filmElement.currentTime = roomData.currentFilmTime || 0;
+                        if (roomData.isPlaying && filmElement.paused) {
+                            filmElement.play().catch(e => console.log("Auto-play blocked:", e));
+                        } else if (!roomData.isPlaying && !filmElement.paused) {
+                            filmElement.pause();
+                        }
+                    }
+
+                    // Render chat messages using the updated data
+                    renderChatMessages(roomData.messages || []);
+
+                    // Render user list using the updated data
+                    renderUserList(roomData.users || {}, roomData.host);
+
+                } else {
+                    // Room document no longer exists (e.g., host deleted it or it expired)
+                    alert("The room has been closed or no longer exists.");
+                    leaveRoom(); // Force user to leave
+                }
+            }, (error) => {
+                console.error("Error listening to real-time updates:", error);
+                alert("Lost connection to the room. Please try joining again.");
+                leaveRoom();
+            });
+        }
+
+        // NEW: Function to sync play/pause/seek events from host to Firestore
+        async function updateFilmState(roomCode, isPlaying, currentTime) {
+            if (myRole !== 'host') return; // Only host can update film state
+
+            try {
+                const roomRef = window.firestoreDoc(window.db, 'rooms', roomCode);
+                await window.firestoreUpdateDoc(roomRef, {
+                    isPlaying: isPlaying,
+                    currentFilmTime: currentTime,
+                    lastHostUpdate: window.firestoreFieldValue.serverTimestamp() // Timestamp of last host activity
+                });
+            } catch (e) {
+                console.error("Error updating film state as host:", e);
+            }
+        }
+
+
+        // --- Floating User List Toggle ---
+        function toggleUserList() {
+            floatingUserList.classList.toggle('collapsed');
+            const arrow = document.querySelector('#floating-user-list-container .toggle-handle span');
+            if (floatingUserList.classList.contains('collapsed')) {
+                arrow.innerHTML = '&#9654;'; // Right arrow when collapsed
+            } else {
+                arrow.innerHTML = '&#9664;'; // Left arrow when expanded
+            }
+        }
+
+        // --- Fullscreen API handling ---
+        document.addEventListener('fullscreenchange', handleFullscreenChange);
+        document.addEventListener('webkitfullscreenchange', handleFullscreenChange); /* Safari */
+        document.addEventListener('mozfullscreenchange', handleFullscreenChange);    /* Firefox */
+        document.addEventListener('MSFullscreenChange', handleFullscreenChange);    /* IE/Edge */
+
+        function handleFullscreenChange() {
+            const userListContainer = document.getElementById('floating-user-list-container');
+            // Check if *any* element is currently in fullscreen mode
+            if (document.fullscreenElement || document.webkitFullscreenElement || document.mozFullScreenElement || document.msFullscreenElement) {
+                // If the video (or any part of the document) goes fullscreen, hide the user list.
+                userListContainer.classList.add('hidden');
+            } else {
+                // If exiting fullscreen, and we are on the 'room' screen, show the user list.
+                if (!document.getElementById('room').classList.contains('hidden')) {
+                    userListContainer.classList.remove('hidden');
+                }
+            }
+        }
+    </script>
+
 </body>
 </html>
