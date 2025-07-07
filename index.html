@@ -722,14 +722,21 @@
             const code = generateRoomCode();
 
             try {
-                console.log("Generated room code:", code); //
+                console.log("Generated room code:", code); 
 
                 // Use db.collection().doc() for clarity and potential compatibility
                 const roomsCollectionRef = db.collection('rooms');
                 const roomRef = roomsCollectionRef.doc(code);
 
                 const docSnap = await roomRef.get();
-                if (docSnap.exists()) {
+                
+                // --- DEBUG LOGS ---
+                console.log("DEBUG: Value of docSnap:", docSnap);
+                console.log("DEBUG: Type of docSnap:", typeof docSnap);
+                console.log("DEBUG: docSnap.exists (as property):", docSnap.exists); 
+                // --- END DEBUG LOGS ---
+
+                if (docSnap.exists()) { 
                     document.getElementById('create-error').innerText = "Room code already exists. Please try creating again.";
                     return;
                 }
@@ -755,7 +762,7 @@
                 myFilm = url;
 
             } catch (e) {
-                console.error("Error creating room:", e); //
+                console.error("Error creating room:", e); 
                 document.getElementById('create-error').innerText = "Failed to create room. Please try again.";
             }
         }
