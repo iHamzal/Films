@@ -592,12 +592,12 @@
     <script type="module">
         // Import the functions you need from the SDKs you need
         // Using 'compat' versions for simpler integration in an existing script
-        import firebase from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"; 
-        
+        import firebase from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js";
+
         // --- CRITICAL FIX: Only import functions that are direct named exports ---
-        // FieldValue and arrayUnion are properties of firebase.firestore.FieldValue, not direct exports here.
-        import { getFirestore, collection, doc, setDoc, getDoc, updateDoc, onSnapshot, arrayUnion, arrayRemove } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js";
-        
+        // FieldValue, arrayUnion, arrayRemove are NOT direct exports here.
+        import { getFirestore, collection, doc, setDoc, getDoc, updateDoc, onSnapshot, deleteDoc } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js";
+
         import { getAnalytics } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-analytics-compat.js"; // Optional
 
         // Your web app's Firebase configuration (Make sure this matches yours exactly)
@@ -612,7 +612,7 @@
         };
 
         // Initialize Firebase
-        const app = firebase.initializeApp(firebaseConfig); 
+        const app = firebase.initializeApp(firebaseConfig);
         const db = getFirestore(app); // Get a reference to the Firestore database
         const analytics = getAnalytics(app); // Initialize analytics (optional)
 
@@ -623,12 +623,14 @@
         window.firestoreSetDoc = setDoc;
         window.firestoreGetDoc = getDoc;
         window.firestoreUpdateDoc = updateDoc;
-        window.firestoreOnSnapshot = onSnapshot; 
-        
+        window.firestoreOnSnapshot = onSnapshot;
+        window.firestoreDeleteDoc = deleteDoc; // Add deleteDoc here
+
         // --- CRITICAL FIX: Correct way to access FieldValue and its methods (like arrayUnion) ---
-        window.firestoreFieldValue = firebase.firestore.FieldValue; 
-        window.firestoreArrayUnion = arrayUnion; // Make arrayUnion available globally
-        window.firestoreArrayRemove = arrayRemove; // Make arrayRemove available globally
+        // FieldValue is accessed via firebase.firestore
+        window.firestoreFieldValue = firebase.firestore.FieldValue;
+        window.firestoreArrayUnion = firebase.firestore.FieldValue.arrayUnion; // Access arrayUnion via FieldValue
+        window.firestoreArrayRemove = firebase.firestore.FieldValue.arrayRemove; // Access arrayRemove via FieldValue
     </script>
 
     <script>
@@ -659,7 +661,7 @@
                     unsubscribeFromRoomUpdates = null; // Clear the reference
                 }
                    // Clear any setInterval if it's still running (it shouldn't be much now)
-                   clearInterval(progressUpdateInterval); 
+                   clearInterval(progressUpdateInterval);
                    progressUpdateInterval = null;
             }
         }
@@ -713,7 +715,7 @@
                 return;
             }
             const code = generateRoomCode();
-            
+
             try {
                 // Check if room code already exists (optional, but good practice)
                 const roomRef = window.firestoreDoc(window.db, 'rooms', code);
@@ -734,7 +736,7 @@
                     currentFilmTime: 0,
                     isPlaying: false // New: Track if the host's video is playing
                 };
-                
+
                 // Save room info to Firestore
                 await window.firestoreSetDoc(roomRef, roomInfo);
 
@@ -759,7 +761,7 @@
         // Join Room (UPDATED FOR FIREBASE)
         async function joinRoom() { // Made async
             const code = document.getElementById('join-code').value.trim().toUpperCase();
-            
+
             try {
                 const roomRef = window.firestoreDoc(window.db, 'rooms', code);
                 const docSnap = await window.firestoreGetDoc(roomRef);
@@ -890,7 +892,7 @@
                     const senderSpan = document.createElement('span');
                     senderSpan.classList.add('chat-sender');
                     senderSpan.textContent = `${msg.sender}:`;
-                    
+
                     messageDiv.appendChild(senderSpan);
                     messageDiv.appendChild(document.createTextNode(` ${msg.text}`)); // Use createTextNode for safety
                     chatMessagesElement.appendChild(messageDiv);
@@ -990,7 +992,7 @@
 
                     if (myRole === 'host') {
                         // If host leaves, delete the entire room
-                        await window.firestoreDoc(window.db, 'rooms', myRoom).delete();
+                        await window.firestoreDeleteDoc(window.firestoreDoc(window.db, 'rooms', myRoom));
                         console.log(`Host ${myName} deleted room ${myRoom}`);
                     } else if (roomData.users && roomData.users[myName]) {
                         // If client leaves, remove themselves from the user list
