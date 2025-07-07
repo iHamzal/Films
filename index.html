@@ -722,12 +722,13 @@
             const code = generateRoomCode();
 
             try {
-                // ADDED LINE FOR DEBUGGING:
-                console.log("Generated room code:", code); 
+                console.log("Generated room code:", code); //
 
-                // Use db.doc directly
-                const roomRef = db.doc('rooms', code); // This is the line that was causing the error
-                const docSnap = await roomRef.get(); // Use .get() directly on the reference
+                // Use db.collection().doc() for clarity and potential compatibility
+                const roomsCollectionRef = db.collection('rooms');
+                const roomRef = roomsCollectionRef.doc(code);
+
+                const docSnap = await roomRef.get();
                 if (docSnap.exists()) {
                     document.getElementById('create-error').innerText = "Room code already exists. Please try creating again.";
                     return;
@@ -744,7 +745,7 @@
                     isPlaying: false
                 };
 
-                await roomRef.set(roomInfo); // Use .set() directly on the reference
+                await roomRef.set(roomInfo);
 
                 document.getElementById('created-room-code').innerText = code;
                 document.getElementById('created-room-info').classList.remove('hidden');
@@ -754,7 +755,7 @@
                 myFilm = url;
 
             } catch (e) {
-                console.error("Error creating room:", e);
+                console.error("Error creating room:", e); //
                 document.getElementById('create-error').innerText = "Failed to create room. Please try again.";
             }
         }
@@ -768,9 +769,11 @@
             const code = document.getElementById('join-code').value.trim().toUpperCase();
 
             try {
-                // Use db.doc directly
-                const roomRef = db.doc('rooms', code);
-                const docSnap = await roomRef.get(); // Use .get() directly on the reference
+                // Use db.collection().doc() for clarity and potential compatibility
+                const roomsCollectionRef = db.collection('rooms');
+                const roomRef = roomsCollectionRef.doc(code);
+
+                const docSnap = await roomRef.get();
 
                 if (!docSnap.exists()) {
                     document.getElementById('join-error').innerText = "Room not found!";
@@ -786,7 +789,7 @@
                 if (!roomData.users || !roomData.users[myName]) {
                     const userUpdate = {};
                     userUpdate[`users.${myName}`] = { currentTime: roomData.currentFilmTime || 0, lastUpdate: firestoreFieldValue.serverTimestamp() };
-                    await roomRef.update(userUpdate); // Use .update() directly on the reference
+                    await roomRef.update(userUpdate);
                 }
 
                 enterRoom();
@@ -809,11 +812,12 @@
             const filmPlayer = document.getElementById('film');
             filmPlayer.src = myFilm;
 
-            // Use db.doc directly
-            const roomRef = db.doc('rooms', myRoom);
+            // Use db.collection().doc() for consistency
+            const roomsCollectionRef = db.collection('rooms');
+            const roomRef = roomsCollectionRef.doc(myRoom);
 
             // Set up real-time listener for room changes
-            unsubscribeFromRoomUpdates = roomRef.onSnapshot((docSnap) => { // Use .onSnapshot() directly on the reference
+            unsubscribeFromRoomUpdates = roomRef.onSnapshot((docSnap) => {
                 if (docSnap.exists()) {
                     const roomData = docSnap.data();
                     updateUI(roomData);
@@ -925,8 +929,9 @@
 
             if (messageText && myRoom) {
                 try {
-                    // Use db.doc directly
-                    const roomRef = db.doc('rooms', myRoom);
+                    // Use db.collection().doc() for consistency
+                    const roomsCollectionRef = db.collection('rooms');
+                    const roomRef = roomsCollectionRef.doc(myRoom);
                     const newMessage = {
                         sender: myName,
                         text: messageText,
@@ -963,8 +968,9 @@
             window.removeEventListener('beforeunload', handleBeforeUnload);
 
             try {
-                // Use db.doc directly
-                const roomRef = db.doc('rooms', myRoom);
+                // Use db.collection().doc() for consistency
+                const roomsCollectionRef = db.collection('rooms');
+                const roomRef = roomsCollectionRef.doc(myRoom);
                 const docSnap = await roomRef.get();
 
                 if (docSnap.exists()) {
