@@ -180,10 +180,11 @@
             flex: 3;
             min-width: 350px; /* Slightly wider minimum for film/chat */
         }
-        video {
+        /* Styling for the YouTube iframe to match video player */
+        #youtube-film-player {
             width: 100%;
             max-width: 650px; /* Wider video */
-            background-color: #000;
+            background-color: #000; /* Black background for iframe area */
             min-height: 280px; /* Taller video */
             display: block;
             margin: 0 auto 30px auto; /* More margin */
@@ -192,7 +193,7 @@
             border: 2px solid var(--border-color); /* Thicker border */
             transition: box-shadow 0.3s ease, border-color 0.3s ease;
         }
-        video:focus {
+        #youtube-film-player:focus {
             border-color: var(--accent-color);
             box-shadow: 0 8px 25px var(--shadow-color-dark), 0 0 20px rgba(0, 191, 255, 0.7); /* Glow on video focus */
             outline: none;
@@ -448,7 +449,7 @@
                 min-width: unset;
             }
 
-            video {
+            #youtube-film-player { /* Adjusted for mobile */
                 max-width: 100%;
                 min-height: 220px; /* Less reduction in video height */
                 margin: 0 auto 25px auto; /* Less margin reduction */
@@ -543,7 +544,7 @@
 
         <div id="create-room" class="screen hidden">
             <h3>Tsyb Room</h3>
-            <input type="text" id="film-link" placeholder="Film Link">
+            <input type="text" id="film-link" placeholder="YouTube Embed URL">
             <button onclick="createRoom()">Create</button>
             <p id="create-error"></p>
             <div id="created-room-info" class="hidden">
@@ -565,9 +566,16 @@
             <h3>Film Room (<span id="current-room-code"></span>)</h3>
             <div id="room-content">
                 <div id="film-chat-section">
-                    <video id="film" controls>
-                        Your browser does not support the video tag.
-                    </video>
+                    <iframe id="youtube-film-player"
+                            width="100%" height="400px"
+                            src="https://www.youtube.com/embed/bdId4lYUmGE?si=l_jKtdri7vBgFG3r"
+                            title="YouTube video player"
+                            frameborder="0"
+                            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                            referrerpolicy="strict-origin-when-cross-origin"
+                            allowfullscreen
+                            style="display: block; margin: 0 auto 30px auto; border-radius: 10px; box-shadow: 0 8px 25px var(--shadow-color-dark); border: 2px solid var(--border-color);"
+                    ></iframe>
                     <div id="chat">
                         <h4>Chat</h4>
                         <div id="chat-messages"></div>
@@ -635,8 +643,8 @@
         let myName = localStorage.getItem('movieroom_myName') || "";
         let myRoom = null;
         let myRole = null; // 'host' or 'client'
-        let myFilm = null;
-        let progressUpdateInterval = null;
+        let myFilm = null; // This will now store the YouTube embed URL
+        let progressUpdateInterval = null; // This will become less relevant for YouTube without API
         let unsubscribeFromRoomUpdates = null;
 
         // Wrap your main application logic in DOMContentLoaded to ensure Firebase is ready
@@ -712,11 +720,12 @@
             return Math.random().toString(36).substr(2, 4).toUpperCase();
         }
 
-        // Create Room (UPDATED FOR FIREBASE)
+        // Create Room (UPDATED FOR FIREBASE & YOUTUBE)
         async function createRoom() {
-            let url = document.getElementById('film-link').value.trim();
-            if (!url) {
-                document.getElementById('create-error').innerText = "Please enter a film link!";
+            let embedUrl = document.getElementById('film-link').value.trim();
+            // Basic check for YouTube embed URL
+            if (!embedUrl || !embedUrl.includes('http://googleusercontent.com/youtube.com/')) {
+                document.getElementById('create-error').innerText = "Please enter a valid YouTube embed URL!";
                 return;
             }
             const code = generateRoomCode();
@@ -724,33 +733,36 @@
             try {
                 console.log("Generated room code:", code); 
 
-                // Use db.collection().doc() for clarity and potential compatibility
                 const roomsCollectionRef = db.collection('rooms');
                 const roomRef = roomsCollectionRef.doc(code);
 
                 const docSnap = await roomRef.get();
                 
-                // --- DEBUG LOGS ---
-                console.log("DEBUG: Value of docSnap:", docSnap);
-                console.log("DEBUG: Type of docSnap:", typeof docSnap);
-                console.log("DEBUG: docSnap.exists (as property):", docSnap.exists); 
-                // --- END DEBUG LOGS ---
-
-                // CHANGE HERE: Changed docSnap.exists() to docSnap.exists
                 if (docSnap.exists) { 
                     document.getElementById('create-error').innerText = "Room code already exists. Please try creating again.";
                     return;
                 }
 
+                // Add enablejsapi and origin to the embed URL for potential future sync
+                let processedEmbedUrl = embedUrl;
+                if (!embedUrl.includes('?')) {
+                    processedEmbedUrl += '?';
+                } else {
+                    processedEmbedUrl += '&';
+                }
+                // Ensure origin is set to your GitHub Pages domain for API calls if needed later
+                processedEmbedUrl += 'enablejsapi=1&origin=https://ihamzal.github.io';
+
+
                 const roomInfo = {
-                    film: url,
+                    film: processedEmbedUrl, // Store the processed embed URL
                     host: myName,
                     messages: [],
                     users: {
                         [myName]: { currentTime: 0, lastUpdate: firestoreFieldValue.serverTimestamp() }
                     },
-                    currentFilmTime: 0,
-                    isPlaying: false
+                    currentFilmTime: 0, // Less relevant for YouTube without API
+                    isPlaying: false // Less relevant for YouTube without API
                 };
 
                 await roomRef.set(roomInfo);
@@ -760,7 +772,7 @@
                 document.getElementById('create-error').innerText = "";
                 myRole = 'host';
                 myRoom = code;
-                myFilm = url;
+                myFilm = processedEmbedUrl; // Set myFilm to the YouTube embed URL
 
             } catch (e) {
                 console.error("Error creating room:", e); 
@@ -772,18 +784,16 @@
             enterRoom();
         }
 
-        // Join Room (UPDATED FOR FIREBASE)
+        // Join Room (UPDATED FOR FIREBASE & YOUTUBE)
         async function joinRoom() {
             const code = document.getElementById('join-code').value.trim().toUpperCase();
 
             try {
-                // Use db.collection().doc() for clarity and potential compatibility
                 const roomsCollectionRef = db.collection('rooms');
                 const roomRef = roomsCollectionRef.doc(code);
 
                 const docSnap = await roomRef.get();
 
-                // CHANGE HERE: Changed !docSnap.exists() to !docSnap.exists
                 if (!docSnap.exists) {
                     document.getElementById('join-error').innerText = "Room not found!";
                     return;
@@ -793,11 +803,12 @@
 
                 myRole = 'client';
                 myRoom = code;
-                myFilm = roomData.film;
+                myFilm = roomData.film; // myFilm now holds the YouTube embed URL
 
+                // Update user presence (currentTime & isPlaying will be less relevant for YouTube without API)
                 if (!roomData.users || !roomData.users[myName]) {
                     const userUpdate = {};
-                    userUpdate[`users.${myName}`] = { currentTime: roomData.currentFilmTime || 0, lastUpdate: firestoreFieldValue.serverTimestamp() };
+                    userUpdate[`users.${myName}`] = { currentTime: 0, lastUpdate: firestoreFieldValue.serverTimestamp() }; // Set to 0 for YouTube
                     await roomRef.update(userUpdate);
                 }
 
@@ -818,16 +829,21 @@
 
             document.getElementById('current-room-code').innerText = myRoom;
             showScreen('room');
-            const filmPlayer = document.getElementById('film');
-            filmPlayer.src = myFilm;
 
-            // Use db.collection().doc() for consistency
+            // Set the src of the YouTube iframe
+            const youtubePlayer = document.getElementById('youtube-film-player');
+            if (youtubePlayer) {
+                youtubePlayer.src = myFilm;
+            } else {
+                console.error("YouTube player iframe not found!");
+            }
+
+
             const roomsCollectionRef = db.collection('rooms');
             const roomRef = roomsCollectionRef.doc(myRoom);
 
             // Set up real-time listener for room changes
             unsubscribeFromRoomUpdates = roomRef.onSnapshot((docSnap) => {
-                // CHANGE HERE: Changed docSnap.exists() to docSnap.exists
                 if (docSnap.exists) {
                     const roomData = docSnap.data();
                     updateUI(roomData);
@@ -841,31 +857,19 @@
                 leaveRoom(true);
             });
 
-            // If I am the host, set up sync listeners on my video player
+            // Host-specific video controls (less relevant now, but leaving structure)
+            // If you want YouTube sync, this section would be rewritten using YouTube IFrame Player API
             if (myRole === 'host') {
-                filmPlayer.onplay = async () => {
-                    await roomRef.update({ isPlaying: true, currentFilmTime: filmPlayer.currentTime });
-                };
-                filmPlayer.onpause = async () => {
-                    await roomRef.update({ isPlaying: false, currentFilmTime: filmPlayer.currentTime });
-                };
-                filmPlayer.onseeked = async () => {
-                    await roomRef.update({ currentFilmTime: filmPlayer.currentTime });
-                };
+                // Remove existing video event listeners if they were present
+                // filmPlayer.onplay = null;
+                // filmPlayer.onpause = null;
+                // filmPlayer.onseeked = null;
 
-                progressUpdateInterval = setInterval(async () => {
-                    if (!filmPlayer.paused) {
-                        try {
-                            const userUpdate = {};
-                            userUpdate[`users.${myName}.currentTime`] = filmPlayer.currentTime;
-                            userUpdate[`users.${myName}.lastUpdate`] = firestoreFieldValue.serverTimestamp();
-                            await roomRef.update(userUpdate);
-                        } catch (e) {
-                            console.error("Error updating host progress:", e);
-                            clearInterval(progressUpdateInterval);
-                        }
-                    }
-                }, 5000);
+                // Clear any old progress interval
+                clearInterval(progressUpdateInterval);
+
+                // No direct host control over YouTube iframe without API, so no automatic sync updates here for now.
+                // If you implement YouTube API, this is where you'd add listeners for player events.
             }
 
             window.addEventListener('beforeunload', handleBeforeUnload);
@@ -877,7 +881,8 @@
 
         // Update UI based on Firestore data
         function updateUI(roomData) {
-            const filmPlayer = document.getElementById('film');
+            // The film player is now a YouTube iframe, its src is set in enterRoom
+            // No direct `currentTime` or `isPlaying` control without YouTube API
 
             const userListElement = document.getElementById('user-list');
             userListElement.innerHTML = '';
@@ -906,19 +911,11 @@
                 chatMessagesElement.scrollTop = chatMessagesElement.scrollHeight;
             }
 
+            // Client sync logic (this will require YouTube API for true sync)
+            // For now, each client controls their own YouTube player
             if (myRole === 'client') {
-                const hostTime = roomData.currentFilmTime || 0;
-                const isPlaying = roomData.isPlaying || false;
-
-                const timeDifference = Math.abs(filmPlayer.currentTime - hostTime);
-                if (timeDifference > 2 || (isPlaying && filmPlayer.paused) || (!isPlaying && !filmPlayer.paused)) {
-                    filmPlayer.currentTime = hostTime;
-                    if (isPlaying) {
-                        filmPlayer.play().catch(e => console.error("Error playing video:", e));
-                    } else {
-                        filmPlayer.pause();
-                    }
-                }
+                // If you want sync, this is where you'd use the YouTube API to control the player
+                // based on host's state. For now, this part is inactive for YouTube.
             }
         }
 
@@ -939,7 +936,6 @@
 
             if (messageText && myRoom) {
                 try {
-                    // Use db.collection().doc() for consistency
                     const roomsCollectionRef = db.collection('rooms');
                     const roomRef = roomsCollectionRef.doc(myRoom);
                     const newMessage = {
@@ -964,9 +960,11 @@
                 return;
             }
 
-            const filmPlayer = document.getElementById('film');
-            filmPlayer.pause();
-            filmPlayer.src = "";
+            // Clear the YouTube iframe src to stop playback
+            const youtubePlayer = document.getElementById('youtube-film-player');
+            if (youtubePlayer) {
+                youtubePlayer.src = ""; // Clears the video
+            }
 
             if (unsubscribeFromRoomUpdates) {
                 unsubscribeFromRoomUpdates();
@@ -978,12 +976,10 @@
             window.removeEventListener('beforeunload', handleBeforeUnload);
 
             try {
-                // Use db.collection().doc() for consistency
                 const roomsCollectionRef = db.collection('rooms');
                 const roomRef = roomsCollectionRef.doc(myRoom);
                 const docSnap = await roomRef.get();
 
-                // CHANGE HERE: Changed docSnap.exists() to docSnap.exists
                 if (docSnap.exists) {
                     const roomData = docSnap.data();
 
