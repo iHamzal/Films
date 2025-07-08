@@ -636,7 +636,7 @@
         let myRole = null; // 'host' or 'client'
         let myFilm = null; // This will now store the generic video URL
         let unsubscribeFromRoomUpdates = null;
-        let timeUpdateInterval = null; // NEW: To store the interval for sending time updates
+        let timeUpdateInterval = null; // To store the interval for sending time updates
 
         document.addEventListener('DOMContentLoaded', function() {
             checkUsername();
@@ -645,20 +645,20 @@
                 chatInput.addEventListener('keypress', sendChatMessage);
             }
 
-            // NEW: Add event listeners for video player
-            const videoPlayer = document.getElementById('html5-film-player');
-            videoPlayer.addEventListener('play', () => updatePlaybackState(true));
-            videoPlayer.addEventListener('pause', () => updatePlaybackState(false));
-            videoPlayer.addEventListener('seeking', () => updatePlaybackTime()); // Update time on seeking
-            videoPlayer.addEventListener('timeupdate', () => {
-                // Throttle time updates to Firebase to avoid excessive writes
-                if (!timeUpdateInterval) {
-                    timeUpdateInterval = setTimeout(() => {
-                        updatePlaybackTime();
-                        timeUpdateInterval = null; // Reset for next update
-                    }, 2000); // Update every 2 seconds
-                }
-            });
+            // REMOVED: Video player event listeners for playback state and time updates
+            // (since we don't want synchronization)
+            // const videoPlayer = document.getElementById('html5-film-player');
+            // videoPlayer.addEventListener('play', () => updatePlaybackState(true));
+            // videoPlayer.addEventListener('pause', () => updatePlaybackState(false));
+            // videoPlayer.addEventListener('seeking', () => updatePlaybackTime());
+            // videoPlayer.addEventListener('timeupdate', () => {
+            //     if (!timeUpdateInterval) {
+            //         timeUpdateInterval = setTimeout(() => {
+            //             updatePlaybackTime();
+            //             timeUpdateInterval = null;
+            //         }, 2000);
+            //     }
+            // });
         });
 
 
@@ -769,10 +769,12 @@
                     host: myName,
                     messages: [],
                     users: {
+                        // Users will still have currentTime to show in list, but it's not synced
                         [myName]: { currentTime: 0, lastUpdate: firestoreFieldValue.serverTimestamp() }
                     },
-                    currentFilmTime: 0,
-                    isPlaying: false
+                    // currentFilmTime and isPlaying are no longer used for sync
+                    // currentFilmTime: 0,
+                    // isPlaying: false
                 };
 
                 await roomRef.set(roomInfo);
@@ -812,6 +814,7 @@
                     document.getElementById('join-error').innerText = "You are already in this room.";
                 } else {
                     await roomRef.update({
+                        // User's own currentTime will still be stored
                         [`users.${myName}`]: { currentTime: 0, lastUpdate: firestoreFieldValue.serverTimestamp() }
                     });
                 }
@@ -839,9 +842,21 @@
             // videoPlayer.play();
             showScreen('room');
             listenForRoomUpdates();
+
+            // NEW: Add time update listener ONLY if we want individual user times
+            // This will ensure the "hh:mm:ss" in the user list still updates for each person
+            const videoPlayerInRoom = document.getElementById('html5-film-player');
+            videoPlayerInRoom.addEventListener('timeupdate', () => {
+                if (!timeUpdateInterval) {
+                    timeUpdateInterval = setTimeout(() => {
+                        updatePlaybackTime();
+                        timeUpdateInterval = null; // Reset for next update
+                    }, 2000); // Update every 2 seconds
+                }
+            });
         }
 
-        // NEW: Function to send current playback time to Firebase
+        // Keep updatePlaybackTime to update individual user's time for the list display
         async function updatePlaybackTime() {
             if (myRoom && myName) {
                 const videoPlayer = document.getElementById('html5-film-player');
@@ -853,14 +868,15 @@
                         [`users.${myName}.lastUpdate`]: firestoreFieldValue.serverTimestamp()
                     });
                 } catch (error) {
-                    console.error("Error updating playback time:", error);
+                    console.error("Error updating playback time for user list:", error);
                 }
             }
         }
 
-        // NEW: Function to send playback state (playing/paused) to Firebase
+        // REMOVED: updatePlaybackState (no longer needed if not syncing)
+        /*
         async function updatePlaybackState(isPlaying) {
-            if (myRoom && myName && myRole === 'host') { // Only host controls playback state
+            if (myRoom && myName && myRole === 'host') {
                 try {
                     const roomRef = db.collection('rooms').doc(myRoom);
                     await roomRef.update({
@@ -871,6 +887,7 @@
                 }
             }
         }
+        */
 
         async function leaveRoom() {
             if (myRoom && myName) {
@@ -929,28 +946,25 @@
                         videoPlayer.load(); // Load new source
                     }
 
-                    // NEW: Sync playback for clients
+                    // REMOVED: All client-side video playback synchronization logic
+                    /*
                     if (myRole === 'client') {
                         if (roomData.isPlaying && videoPlayer.paused) {
                             videoPlayer.play().catch(e => console.log("Play failed (likely user interaction needed):", e));
                         } else if (!roomData.isPlaying && !videoPlayer.paused) {
                             videoPlayer.pause();
                         }
-
-                        // Basic time synchronization (can be refined)
-                        // Only seek if difference is significant to avoid constant jumping
                         const timeDifference = Math.abs(videoPlayer.currentTime - roomData.currentFilmTime);
-                        if (timeDifference > 3 || (timeDifference > 0.5 && !roomData.isPlaying)) { // More aggressive if paused
+                        if (timeDifference > 3 || (timeDifference > 0.5 && !roomData.isPlaying)) {
                             videoPlayer.currentTime = roomData.currentFilmTime;
                         }
                     } else if (myRole === 'host') {
-                        // Host updates the global currentFilmTime
                         const hostCurrentTime = videoPlayer.currentTime;
-                        if (Math.abs(hostCurrentTime - roomData.currentFilmTime) > 1) { // Only update if significantly different
+                        if (Math.abs(hostCurrentTime - roomData.currentFilmTime) > 1) {
                              roomRef.update({ currentFilmTime: hostCurrentTime });
                         }
                     }
-
+                    */
 
                 } else {
                     alert("The room you were in no longer exists.");
@@ -963,7 +977,7 @@
             });
         }
 
-        // FIX: sendChatMessage function updated to use new Date() for timestamp
+        // sendChatMessage function updated to use new Date() for timestamp
         async function sendChatMessage(event) {
             // Check for event existence and key, or if it's a direct button click
             if (event && event.type === 'keypress' && event.key !== 'Enter') {
@@ -1027,7 +1041,7 @@
             }
         }
 
-        // NEW/MODIFIED: Update user list to show time and format it
+        // Update user list to show time and format it
         function updateUserList(users) {
             const userListUl = document.getElementById('user-list');
             userListUl.innerHTML = '';
@@ -1042,6 +1056,7 @@
                 const userLi = document.createElement('li');
                 const userData = users[name];
                 let displayTime = '';
+                // Only show time if it's a number and we have valid data
                 if (userData && typeof userData.currentTime === 'number') {
                     displayTime = ` (${formatTime(userData.currentTime)})`;
                 }
@@ -1059,10 +1074,10 @@
             }
         }
 
-        // NEW: Helper function to format time (hh:mm:ss)
+        // Helper function to format time (hh:mm:ss)
         function formatTime(seconds) {
             if (isNaN(seconds) || seconds < 0) {
-                return "00:00";
+                return "00:00"; // Default for invalid/negative seconds
             }
             const h = Math.floor(seconds / 3600);
             const m = Math.floor((seconds % 3600) / 60);
