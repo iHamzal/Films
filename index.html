@@ -636,6 +636,7 @@
         let myRole = null; // 'host' or 'client'
         let myFilm = null; // This will now store the generic video URL
         let unsubscribeFromRoomUpdates = null;
+        let timeUpdateInterval = null; // NEW: To store the interval for sending time updates
 
         document.addEventListener('DOMContentLoaded', function() {
             checkUsername();
@@ -643,6 +644,21 @@
             if (chatInput) {
                 chatInput.addEventListener('keypress', sendChatMessage);
             }
+
+            // NEW: Add event listeners for video player
+            const videoPlayer = document.getElementById('html5-film-player');
+            videoPlayer.addEventListener('play', () => updatePlaybackState(true));
+            videoPlayer.addEventListener('pause', () => updatePlaybackState(false));
+            videoPlayer.addEventListener('seeking', () => updatePlaybackTime()); // Update time on seeking
+            videoPlayer.addEventListener('timeupdate', () => {
+                // Throttle time updates to Firebase to avoid excessive writes
+                if (!timeUpdateInterval) {
+                    timeUpdateInterval = setTimeout(() => {
+                        updatePlaybackTime();
+                        timeUpdateInterval = null; // Reset for next update
+                    }, 2000); // Update every 2 seconds
+                }
+            });
         });
 
 
@@ -661,6 +677,11 @@
                 if (unsubscribeFromRoomUpdates) {
                     unsubscribeFromRoomUpdates();
                     unsubscribeFromRoomUpdates = null;
+                }
+                 // NEW: Clear the time update interval if leaving room
+                if (timeUpdateInterval) {
+                    clearTimeout(timeUpdateInterval);
+                    timeUpdateInterval = null;
                 }
             }
         }
@@ -820,6 +841,36 @@
             listenForRoomUpdates();
         }
 
+        // NEW: Function to send current playback time to Firebase
+        async function updatePlaybackTime() {
+            if (myRoom && myName) {
+                const videoPlayer = document.getElementById('html5-film-player');
+                const currentTime = videoPlayer.currentTime || 0; // Get current time, default to 0
+                try {
+                    const roomRef = db.collection('rooms').doc(myRoom);
+                    await roomRef.update({
+                        [`users.${myName}.currentTime`]: currentTime,
+                        [`users.${myName}.lastUpdate`]: firestoreFieldValue.serverTimestamp()
+                    });
+                } catch (error) {
+                    console.error("Error updating playback time:", error);
+                }
+            }
+        }
+
+        // NEW: Function to send playback state (playing/paused) to Firebase
+        async function updatePlaybackState(isPlaying) {
+            if (myRoom && myName && myRole === 'host') { // Only host controls playback state
+                try {
+                    const roomRef = db.collection('rooms').doc(myRoom);
+                    await roomRef.update({
+                        isPlaying: isPlaying
+                    });
+                } catch (error) {
+                    console.error("Error updating playback state:", error);
+                }
+            }
+        }
 
         async function leaveRoom() {
             if (myRoom && myName) {
@@ -842,6 +893,13 @@
                     videoPlayer.pause();
                     videoPlayer.removeAttribute('src'); // Clear the source
                     videoPlayer.load(); // Reload to clear player
+
+                    // NEW: Clear interval if leaving room
+                    if (timeUpdateInterval) {
+                        clearTimeout(timeUpdateInterval);
+                        timeUpdateInterval = null;
+                    }
+
                     showScreen('main-menu');
                 }
             } else {
@@ -861,6 +919,7 @@
                     const roomData = docSnapshot.data();
 
                     updateChat(roomData.messages);
+                    // MODIFIED: Pass users data to update list
                     updateUserList(roomData.users);
 
                     // CHANGED: Update HTML5 video player source if different
@@ -868,9 +927,30 @@
                     if (videoPlayer.src !== roomData.film) {
                         videoPlayer.src = roomData.film;
                         videoPlayer.load(); // Load new source
-                        // Consider auto-playing new video, but remember browser restrictions
-                        // videoPlayer.play();
                     }
+
+                    // NEW: Sync playback for clients
+                    if (myRole === 'client') {
+                        if (roomData.isPlaying && videoPlayer.paused) {
+                            videoPlayer.play().catch(e => console.log("Play failed (likely user interaction needed):", e));
+                        } else if (!roomData.isPlaying && !videoPlayer.paused) {
+                            videoPlayer.pause();
+                        }
+
+                        // Basic time synchronization (can be refined)
+                        // Only seek if difference is significant to avoid constant jumping
+                        const timeDifference = Math.abs(videoPlayer.currentTime - roomData.currentFilmTime);
+                        if (timeDifference > 3 || (timeDifference > 0.5 && !roomData.isPlaying)) { // More aggressive if paused
+                            videoPlayer.currentTime = roomData.currentFilmTime;
+                        }
+                    } else if (myRole === 'host') {
+                        // Host updates the global currentFilmTime
+                        const hostCurrentTime = videoPlayer.currentTime;
+                        if (Math.abs(hostCurrentTime - roomData.currentFilmTime) > 1) { // Only update if significantly different
+                             roomRef.update({ currentFilmTime: hostCurrentTime });
+                        }
+                    }
+
 
                 } else {
                     alert("The room you were in no longer exists.");
@@ -884,11 +964,12 @@
         }
 
         async function sendChatMessage(event) {
-            if (event.type === 'keypress' && event.key !== 'Enter') {
+            // Fix: Check for event existence and key, or if it's a direct button click
+            if (event && event.type === 'keypress' && event.key !== 'Enter') {
                 return;
             }
-            if (event.type === 'keypress') {
-                event.preventDefault();
+            if (event && event.type === 'keypress') {
+                event.preventDefault(); // Prevent default behavior for Enter key
             }
 
             const chatInput = document.getElementById('chat-input');
@@ -936,6 +1017,7 @@
             }
         }
 
+        // NEW/MODIFIED: Update user list to show time and format it
         function updateUserList(users) {
             const userListUl = document.getElementById('user-list');
             userListUl.innerHTML = '';
@@ -948,7 +1030,12 @@
             const userNames = Object.keys(users);
             userNames.forEach(name => {
                 const userLi = document.createElement('li');
-                userLi.textContent = name;
+                const userData = users[name];
+                let displayTime = '';
+                if (userData && typeof userData.currentTime === 'number') {
+                    displayTime = ` (${formatTime(userData.currentTime)})`;
+                }
+                userLi.textContent = name + displayTime;
                 userListUl.appendChild(userLi);
             });
             const toggleArrow = document.getElementById('toggle-arrow');
@@ -961,6 +1048,24 @@
                 toggleArrow.innerHTML = '▼';
             }
         }
+
+        // NEW: Helper function to format time (hh:mm:ss)
+        function formatTime(seconds) {
+            if (isNaN(seconds) || seconds < 0) {
+                return "00:00";
+            }
+            const h = Math.floor(seconds / 3600);
+            const m = Math.floor((seconds % 3600) / 60);
+            const s = Math.floor(seconds % 60);
+
+            const parts = [m, s];
+            if (h > 0) {
+                parts.unshift(h);
+            }
+
+            return parts.map(part => part.toString().padStart(2, '0')).join(':');
+        }
+
 
         function toggleUserList() {
             const userListContainer = document.getElementById('floating-user-list-container');
