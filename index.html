@@ -330,8 +330,8 @@
             font-size: 0.95em; /* Slightly larger text */
             text-align: left;
             color: var(--text-color);
-            scrollbar-width: thin;
-            scrollbar-color: var(--accent-color) var(--dark-bg);
+            scrollbar-width: thin; /* Firefox */
+            scrollbar-color: var(--accent-color) var(--dark-bg); /* Firefox */
         }
         #user-list::-webkit-scrollbar {
             width: 8px;
@@ -963,8 +963,9 @@
             });
         }
 
+        // FIX: sendChatMessage function updated to use new Date() for timestamp
         async function sendChatMessage(event) {
-            // Fix: Check for event existence and key, or if it's a direct button click
+            // Check for event existence and key, or if it's a direct button click
             if (event && event.type === 'keypress' && event.key !== 'Enter') {
                 return;
             }
@@ -981,7 +982,9 @@
                     const newMessage = {
                         sender: myName,
                         text: messageText,
-                        timestamp: firestoreFieldValue.serverTimestamp()
+                        // Use a client-side Date object for the timestamp when adding to array
+                        // Firestore will convert this to a Timestamp object when written
+                        timestamp: new Date()
                     };
                     await roomRef.update({
                         messages: firestoreArrayUnion(newMessage)
@@ -990,6 +993,8 @@
                     chatInput.focus();
                 } catch (error) {
                     console.error("Error sending message:", error);
+                    // You might want to display an error to the user here
+                    // document.getElementById('chat-error').innerText = "Failed to send message. Please try again.";
                 }
             }
         }
@@ -998,7 +1003,12 @@
             const chatMessagesDiv = document.getElementById('chat-messages');
             chatMessagesDiv.innerHTML = '';
             if (messages) {
-                messages.sort((a, b) => (a.timestamp && b.timestamp) ? a.timestamp.toDate() - b.timestamp.toDate() : 0);
+                // Ensure messages are sorted if they have a timestamp property
+                messages.sort((a, b) => {
+                    const tsA = a.timestamp && a.timestamp.toDate ? a.timestamp.toDate() : new Date(0);
+                    const tsB = b.timestamp && b.timestamp.toDate ? b.timestamp.toDate() : new Date(0);
+                    return tsA - tsB;
+                });
 
                 messages.forEach(msg => {
                     const msgDiv = document.createElement('div');
