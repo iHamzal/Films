@@ -180,11 +180,11 @@
             flex: 3;
             min-width: 350px; /* Slightly wider minimum for film/chat */
         }
-        /* Styling for the YouTube iframe to match video player */
-        #youtube-film-player {
+        /* Styling for the HTML5 video player */
+        #html5-film-player {
             width: 100%;
             max-width: 650px; /* Wider video */
-            background-color: #000; /* Black background for iframe area */
+            background-color: #000; /* Black background for player area */
             min-height: 280px; /* Taller video */
             display: block;
             margin: 0 auto 30px auto; /* More margin */
@@ -193,7 +193,7 @@
             border: 2px solid var(--border-color); /* Thicker border */
             transition: box-shadow 0.3s ease, border-color 0.3s ease;
         }
-        #youtube-film-player:focus {
+        #html5-film-player:focus {
             border-color: var(--accent-color);
             box-shadow: 0 8px 25px var(--shadow-color-dark), 0 0 20px rgba(0, 191, 255, 0.7); /* Glow on video focus */
             outline: none;
@@ -449,7 +449,7 @@
                 min-width: unset;
             }
 
-            #youtube-film-player { /* Adjusted for mobile */
+            #html5-film-player { /* Adjusted for mobile */
                 max-width: 100%;
                 min-height: 220px; /* Less reduction in video height */
                 margin: 0 auto 25px auto; /* Less margin reduction */
@@ -544,7 +544,7 @@
 
         <div id="create-room" class="screen hidden">
             <h3>Tsyb Room</h3>
-            <input type="text" id="film-link" placeholder="YouTube Embed URL">
+            <input type="text" id="film-link" placeholder="Video URL (e.g., Google Drive direct link, MP4 URL)">
             <button onclick="createRoom()">Create</button>
             <p id="create-error"></p>
             <div id="created-room-info" class="hidden">
@@ -566,15 +566,14 @@
             <h3>Film Room (<span id="current-room-code"></span>)</h3>
             <div id="room-content">
                 <div id="film-chat-section">
-                    <iframe id="youtube-film-player"
+                    <video id="html5-film-player"
                                 width="100%" height="400px"
-                                src="https://www.youtube.com/embed/" title="YouTube video player"
-                                frameborder="0"
-                                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-                                referrerpolicy="strict-origin-when-cross-origin"
-                                allowfullscreen
+                                controls
+                                preload="auto"
                                 style="display: block; margin: 0 auto 30px auto; border-radius: 10px; box-shadow: 0 8px 25px var(--shadow-color-dark); border: 2px solid var(--border-color);"
-                    ></iframe>
+                    >
+                        Your browser does not support the video tag.
+                    </video>
                     <div id="chat">
                         <h4>Chat</h4>
                         <div id="chat-messages"></div>
@@ -615,16 +614,10 @@
         // Get Firestore instance
         const db = app.firestore();
 
-        // No longer assigning to window.firestoreCollection/Doc etc.
-        // We will use db.collection and db.doc directly in the functions.
-
-        // Correct way to access FieldValue and its methods from the global firebase object.
-        // These are still needed as they are not methods of the 'db' object directly.
         const firestoreFieldValue = firebase.firestore.FieldValue;
         const firestoreArrayUnion = firebase.firestore.FieldValue.arrayUnion;
         const firestoreArrayRemove = firebase.firestore.FieldValue.arrayRemove;
 
-        // --- Verification Log ---
         console.log("Firebase app initialized:", app);
         console.log("Firestore db object:", db);
         if (typeof db.doc === 'function') {
@@ -638,19 +631,14 @@
             console.error("ERROR: firestoreArrayUnion is NOT a function!", firestoreArrayUnion);
         }
 
-        // Global variables for your application logic
         let myName = localStorage.getItem('movieroom_myName') || "";
         let myRoom = null;
         let myRole = null; // 'host' or 'client'
-        let myFilm = null; // This will now store the YouTube embed URL
-        let progressUpdateInterval = null; // This will become less relevant for YouTube without API
+        let myFilm = null; // This will now store the generic video URL
         let unsubscribeFromRoomUpdates = null;
 
-        // Wrap your main application logic in DOMContentLoaded to ensure Firebase is ready
         document.addEventListener('DOMContentLoaded', function() {
             checkUsername();
-
-            // Listen for Enter key in chat input
             const chatInput = document.getElementById('chat-input');
             if (chatInput) {
                 chatInput.addEventListener('keypress', sendChatMessage);
@@ -658,32 +646,25 @@
         });
 
 
-        // --- Helper function to show/hide screens ---
         function showScreen(screenId) {
             document.querySelectorAll('.screen').forEach(screen => {
                 screen.classList.add('hidden');
             });
             document.getElementById(screenId).classList.remove('hidden');
 
-            // Show/hide floating user list based on active screen
             if (screenId === 'room') {
                 document.getElementById('floating-user-list-container').classList.add('collapsed');
                 document.getElementById('toggle-arrow').innerHTML = '▶'; // Right arrow
                 document.getElementById('floating-user-list-container').classList.remove('hidden');
             } else {
                 document.getElementById('floating-user-list-container').classList.add('hidden');
-                // IMPORTANT: Stop the Firestore listener when leaving the room screen
                 if (unsubscribeFromRoomUpdates) {
                     unsubscribeFromRoomUpdates();
-                    unsubscribeFromRoomUpdates = null; // Clear the reference
+                    unsubscribeFromRoomUpdates = null;
                 }
-                    // Clear any setInterval if it's still running (it shouldn't be much now)
-                    clearInterval(progressUpdateInterval);
-                    progressUpdateInterval = null;
             }
         }
 
-        // --- Username logic ---
         function checkUsername() {
             if (myName) {
                 document.getElementById('display-username').textContent = `Welcome, ${myName}!`;
@@ -693,7 +674,6 @@
             }
         }
 
-        // Save Username
         function saveUsername() {
             let val = document.getElementById('username-input').value.trim();
             if (!val || val.length > 12) {
@@ -701,35 +681,32 @@
                 return;
             }
             myName = val;
-            localStorage.setItem('movieroom_myName', myName); // Username still uses localStorage
+            localStorage.setItem('movieroom_myName', myName);
             document.getElementById('username-error').innerText = "";
             document.getElementById('display-username').textContent = `Welcome, ${myName}!`;
             showScreen('main-menu');
         }
 
-        // Change Username
         function changeUsername() {
             document.getElementById('username-input').value = myName;
             document.getElementById('username-error').innerText = '';
             showScreen('username-prompt');
         }
 
-        // --- Room logic ---
         function generateRoomCode() {
             return Math.random().toString(36).substr(2, 4).toUpperCase();
         }
 
-        // Create Room (UPDATED FOR FIREBASE & YOUTUBE)
+        // --- NEW/MODIFIED: Create Room for Generic Video URL (including Google Drive) ---
         async function createRoom() {
-            let embedUrl = document.getElementById('film-link').value.trim();
-            // Basic check for YouTube embed URL
-            // Corrected validation to allow for 'https://googleusercontent.com/youtube.com/embed/VIDEO_ID'
-            // or 'https://googleusercontent.com/youtube.com/watch?v=VIDEO_ID' (though embed is preferred)
-            // Added check for both http and https, and then forces https
-            if (!embedUrl || !(embedUrl.includes('youtube.com/embed/') || embedUrl.includes('youtube.com/watch?v='))) {
-                document.getElementById('create-error').innerText = "Please enter a valid YouTube embed URL! (e.g., https://googleusercontent.com/youtube.com/14<VIDEO_ID>)";
+            let videoUrl = document.getElementById('film-link').value.trim();
+
+            // Basic validation for any http/https URL
+            if (!videoUrl || !(videoUrl.startsWith('http://') || videoUrl.startsWith('https://'))) {
+                document.getElementById('create-error').innerText = "Please enter a valid video URL (must start with http:// or https://)";
                 return;
             }
+
             const code = generateRoomCode();
 
             try {
@@ -740,49 +717,41 @@
 
                 const docSnap = await roomRef.get();
 
-                // **** DEBUGGING LINES START HERE ****
-                console.log("DEBUG: About to check docSnap.exists. docSnap object:", docSnap);
-                console.log("DEBUG: Type of docSnap.exists:", typeof docSnap.exists);
-                // **** DEBUGGING LINES END HERE ****
-
-                // **** THIS IS THE CRITICAL CHANGE: docSnap.exists (property) instead of docSnap.exists() (method) ****
                 if (docSnap.exists) {
                     document.getElementById('create-error').innerText = "Room code already exists. Please try creating again.";
                     return;
                 }
 
-                // Add enablejsapi and origin to the embed URL for potential future sync
-                let processedEmbedUrl = embedUrl;
-
-                // Ensure HTTPS for mixed content security
-                if (processedEmbedUrl.startsWith('http://')) {
-                    processedEmbedUrl = 'https://' + processedEmbedUrl.substring(7);
-                } else if (!processedEmbedUrl.startsWith('https://')) {
-                    // Prepend https if no protocol
-                    processedEmbedUrl = 'https://' + processedEmbedUrl;
+                // For Google Drive specifically, you often need to transform the URL
+                // This is a common pattern for direct playback from Google Drive "shareable links"
+                // It replaces "/view" or "/file/d/" with "/uc?export=download&id="
+                if (videoUrl.includes('drive.google.com') && videoUrl.includes('/view')) {
+                    const fileIdMatch = videoUrl.match(/\/d\/([a-zA-Z0-9_-]+)\/view/);
+                    if (fileIdMatch && fileIdMatch[1]) {
+                        videoUrl = `https://drive.google.com/uc?export=download&id=${fileIdMatch[1]}`;
+                    } else {
+                        // Fallback or warning if a direct ID isn't found for Google Drive
+                        console.warn("Could not extract file ID for Google Drive URL, attempting to use as-is.");
+                    }
+                } else if (videoUrl.includes('drive.google.com') && videoUrl.includes('/file/d/')) {
+                    const fileIdMatch = videoUrl.match(/\/file\/d\/([a-zA-Z0-9_-]+)/);
+                     if (fileIdMatch && fileIdMatch[1]) {
+                        videoUrl = `https://drive.google.com/uc?export=download&id=${fileIdMatch[1]}`;
+                    } else {
+                         console.warn("Could not extract file ID for Google Drive /file/d/ URL, attempting to use as-is.");
+                    }
                 }
-
-                // Add necessary YouTube API parameters if not already present
-                let params = 'enablejsapi=1&origin=https://ihamzal.github.io&modestbranding=1'; // Added modestbranding
-                // You can add more parameters here if needed, e.g., &controls=0 to hide controls, but it's not recommended.
-
-                if (!processedEmbedUrl.includes('?')) {
-                    processedEmbedUrl += '?';
-                } else if (!processedEmbedUrl.endsWith('?') && !processedEmbedUrl.endsWith('&')) {
-                    processedEmbedUrl += '&';
-                }
-                processedEmbedUrl += params;
 
 
                 const roomInfo = {
-                    film: processedEmbedUrl, // Store the processed embed URL
+                    film: videoUrl, // Store the processed video URL
                     host: myName,
                     messages: [],
                     users: {
                         [myName]: { currentTime: 0, lastUpdate: firestoreFieldValue.serverTimestamp() }
                     },
-                    currentFilmTime: 0, // Less relevant for YouTube without API
-                    isPlaying: false // Less relevant for YouTube without API
+                    currentFilmTime: 0,
+                    isPlaying: false
                 };
 
                 await roomRef.set(roomInfo);
@@ -792,7 +761,7 @@
                 document.getElementById('create-error').innerText = "";
                 myRole = 'host';
                 myRoom = code;
-                myFilm = processedEmbedUrl;
+                myFilm = videoUrl; // Set myFilm to the processed URL
 
             } catch (error) {
                 console.error("Error creating room:", error);
@@ -800,7 +769,7 @@
             }
         }
 
-        // Join Room (UPDATED FOR FIREBASE & YOUTUBE)
+        // --- MODIFIED: Join Room to get generic video URL ---
         async function joinRoom() {
             let code = document.getElementById('join-code').value.trim().toUpperCase();
             if (!code) {
@@ -812,18 +781,15 @@
                 const roomRef = db.collection('rooms').doc(code);
                 const doc = await roomRef.get();
 
-                if (!doc.exists) { // Ensure .exists is used as a property
+                if (!doc.exists) {
                     document.getElementById('join-error').innerText = "Room not found.";
                     return;
                 }
 
-                // Check if user is already in the room
                 const roomData = doc.data();
                 if (roomData.users && roomData.users[myName]) {
                     document.getElementById('join-error').innerText = "You are already in this room.";
-                    // Still go to room if already in it, just no user update
                 } else {
-                    // Add user to the room's user list in Firestore
                     await roomRef.update({
                         [`users.${myName}`]: { currentTime: 0, lastUpdate: firestoreFieldValue.serverTimestamp() }
                     });
@@ -831,7 +797,7 @@
 
                 myRoom = code;
                 myRole = 'client';
-                myFilm = roomData.film; // Get film URL from Firestore
+                myFilm = roomData.film; // Get film URL from Firestore (now it's a generic video URL)
 
                 goToRoom();
 
@@ -841,50 +807,51 @@
             }
         }
 
-        // Go to Room
+        // --- MODIFIED: Go to Room to load HTML5 video player ---
         function goToRoom() {
             document.getElementById('current-room-code').innerText = myRoom;
-            document.getElementById('youtube-film-player').src = myFilm; // Load the film
+            // CHANGED: Target the HTML5 video player
+            const videoPlayer = document.getElementById('html5-film-player');
+            videoPlayer.src = myFilm; // Load the film
+            videoPlayer.load(); // Load the video source
+            // You might want to auto-play here, but browsers often block it without user interaction
+            // videoPlayer.play();
             showScreen('room');
-            listenForRoomUpdates(); // Start listening for updates once in the room
+            listenForRoomUpdates();
         }
 
 
-        // Leave Room
         async function leaveRoom() {
             if (myRoom && myName) {
                 try {
                     const roomRef = db.collection('rooms').doc(myRoom);
-
-                    // Remove user from the room's user list
                     await roomRef.update({
                         [`users.${myName}`]: firestoreFieldValue.delete()
                     });
-
-                    // If host leaves and no other users, consider deleting the room or transferring host (more complex)
-                    // For now, let's just clean up the user.
                     console.log(`${myName} left room ${myRoom}`);
-
                 } catch (error) {
                     console.error("Error leaving room:", error);
-                    // Don't block leaving if there's a Firebase error
                 } finally {
                     myRoom = null;
                     myRole = null;
                     myFilm = null;
-                    document.getElementById('chat-messages').innerHTML = ''; // Clear chat
-                    document.getElementById('user-list').innerHTML = ''; // Clear user list
+                    document.getElementById('chat-messages').innerHTML = '';
+                    document.getElementById('user-list').innerHTML = '';
+                    // CHANGED: Stop video playback when leaving room
+                    const videoPlayer = document.getElementById('html5-film-player');
+                    videoPlayer.pause();
+                    videoPlayer.removeAttribute('src'); // Clear the source
+                    videoPlayer.load(); // Reload to clear player
                     showScreen('main-menu');
                 }
             } else {
-                showScreen('main-menu'); // Just go back if no room or name
+                showScreen('main-menu');
             }
         }
 
-        // --- Real-time Updates (UPDATED FOR FIREBASE) ---
         function listenForRoomUpdates() {
             if (unsubscribeFromRoomUpdates) {
-                unsubscribeFromRoomUpdates(); // Stop previous listener if any
+                unsubscribeFromRoomUpdates();
             }
 
             const roomRef = db.collection('rooms').doc(myRoom);
@@ -893,28 +860,21 @@
                 if (docSnapshot.exists) {
                     const roomData = docSnapshot.data();
 
-                    // Update chat messages
                     updateChat(roomData.messages);
-
-                    // Update user list
                     updateUserList(roomData.users);
 
-                    // Host-specific sync (simplified as YouTube API isn't used for full sync)
-                    if (myRole === 'host') {
-                        // Could implement sync later if using YouTube IFrame Player API
-                        // For now, host just ensures the film is loaded for everyone.
-                        document.getElementById('youtube-film-player').src = roomData.film;
-                    } else { // Client updates
-                         // Ensure client's video matches host's selected video
-                        if (document.getElementById('youtube-film-player').src !== roomData.film) {
-                            document.getElementById('youtube-film-player').src = roomData.film;
-                        }
+                    // CHANGED: Update HTML5 video player source if different
+                    const videoPlayer = document.getElementById('html5-film-player');
+                    if (videoPlayer.src !== roomData.film) {
+                        videoPlayer.src = roomData.film;
+                        videoPlayer.load(); // Load new source
+                        // Consider auto-playing new video, but remember browser restrictions
+                        // videoPlayer.play();
                     }
 
                 } else {
-                    // Room no longer exists (e.g., host deleted it or it expired)
                     alert("The room you were in no longer exists.");
-                    leaveRoom(); // Go back to main menu
+                    leaveRoom();
                 }
             }, error => {
                 console.error("Error listening to room updates:", error);
@@ -923,14 +883,12 @@
             });
         }
 
-        // --- Chat Functions (UPDATED FOR FIREBASE) ---
         async function sendChatMessage(event) {
-            // Only send on Enter key press if it's a keyboard event, but always send on button click
             if (event.type === 'keypress' && event.key !== 'Enter') {
                 return;
             }
             if (event.type === 'keypress') {
-                event.preventDefault(); // Prevent new line in textarea on Enter
+                event.preventDefault();
             }
 
             const chatInput = document.getElementById('chat-input');
@@ -942,13 +900,13 @@
                     const newMessage = {
                         sender: myName,
                         text: messageText,
-                        timestamp: firestoreFieldValue.serverTimestamp() // Use server timestamp
+                        timestamp: firestoreFieldValue.serverTimestamp()
                     };
                     await roomRef.update({
                         messages: firestoreArrayUnion(newMessage)
                     });
-                    chatInput.value = ''; // Clear input
-                    chatInput.focus(); // Keep focus
+                    chatInput.value = '';
+                    chatInput.focus();
                 } catch (error) {
                     console.error("Error sending message:", error);
                 }
@@ -957,12 +915,8 @@
 
         function updateChat(messages) {
             const chatMessagesDiv = document.getElementById('chat-messages');
-            chatMessagesDiv.innerHTML = ''; // Clear existing messages
+            chatMessagesDiv.innerHTML = '';
             if (messages) {
-                // Sort messages by timestamp if needed (Firestore will return them in array order, so usually no sort needed if appended)
-                // If you fetch all docs in a collection and want to order, you'd use orderBy().
-                // For an array field updated with arrayUnion, order is generally preserved based on addition.
-                // However, to be safe for display, you might sort by timestamp:
                 messages.sort((a, b) => (a.timestamp && b.timestamp) ? a.timestamp.toDate() - b.timestamp.toDate() : 0);
 
                 messages.forEach(msg => {
@@ -978,20 +932,17 @@
                     msgDiv.appendChild(textSpan);
                     chatMessagesDiv.appendChild(msgDiv);
                 });
-                // Scroll to the bottom
                 chatMessagesDiv.scrollTop = chatMessagesDiv.scrollHeight;
             }
         }
 
-        // --- User List Functions (UPDATED FOR FIREBASE) ---
         function updateUserList(users) {
             const userListUl = document.getElementById('user-list');
-            userListUl.innerHTML = ''; // Clear existing users
+            userListUl.innerHTML = '';
 
-            // FIX: Added check for 'users' object to prevent 'userNames is not defined' error
             if (!users) {
                 console.warn("updateUserList called with no users data.");
-                return; // Exit if no users object
+                return;
             }
 
             const userNames = Object.keys(users);
@@ -1000,15 +951,13 @@
                 userLi.textContent = name;
                 userListUl.appendChild(userLi);
             });
-            // Update toggle arrow
             const toggleArrow = document.getElementById('toggle-arrow');
             const userListContainer = document.getElementById('floating-user-list-container');
             if (userNames.length === 0 && !userListContainer.classList.contains('collapsed')) {
-                 // If no users and not collapsed, collapse it
                 userListContainer.classList.add('collapsed');
                 toggleArrow.innerHTML = '▶';
             } else if (userNames.length > 0 && userListContainer.classList.contains('collapsed')) {
-                // If users exist and it's collapsed, show the down arrow
+                // Only show down arrow if it was collapsed AND there are users
                 toggleArrow.innerHTML = '▼';
             }
         }
@@ -1019,9 +968,9 @@
 
             userListContainer.classList.toggle('collapsed');
             if (userListContainer.classList.contains('collapsed')) {
-                toggleArrow.innerHTML = '▶'; // Right arrow
+                toggleArrow.innerHTML = '▶';
             } else {
-                toggleArrow.innerHTML = '▼'; // Down arrow
+                toggleArrow.innerHTML = '▼';
             }
         }
     </script>
