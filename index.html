@@ -738,6 +738,11 @@
 
                 const docSnap = await roomRef.get();
                 
+                // **** DEBUGGING LINES START HERE ****
+                console.log("DEBUG: About to check docSnap.exists. docSnap object:", docSnap);
+                console.log("DEBUG: Type of docSnap.exists:", typeof docSnap.exists);
+                // **** DEBUGGING LINES END HERE ****
+
                 // **** THIS IS THE CRITICAL CHANGE: docSnap.exists (property) instead of docSnap.exists() (method) ****
                 if (docSnap.exists) { 
                     document.getElementById('create-error').innerText = "Room code already exists. Please try creating again.";
