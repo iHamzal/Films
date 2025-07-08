@@ -723,7 +723,9 @@
         async function createRoom() {
             let embedUrl = document.getElementById('film-link').value.trim();
             // Basic check for YouTube embed URL
-            if (!embedUrl || !embedUrl.includes('http://googleusercontent.com/youtube.com/embed/')) { // Corrected check
+            // Corrected validation to allow for 'http://googleusercontent.com/youtube.com/embed/VIDEO_ID'
+            // or 'http://googleusercontent.com/youtube.com/watch?v=VIDEO_ID' (though embed is preferred)
+            if (!embedUrl || !(embedUrl.startsWith('http://googleusercontent.com/youtube.com/embed/') || embedUrl.startsWith('http://googleusercontent.com/youtube.com/watch?v='))) {
                 document.getElementById('create-error').innerText = "Please enter a valid YouTube embed URL! (e.g., https://www.youtube.com/embed/<VIDEO_ID>)";
                 return;
             }
@@ -750,13 +752,22 @@
 
                 // Add enablejsapi and origin to the embed URL for potential future sync
                 let processedEmbedUrl = embedUrl;
-                if (!embedUrl.includes('?')) {
+
+                // Ensure HTTPS for mixed content security
+                if (processedEmbedUrl.startsWith('http://')) {
+                    processedEmbedUrl = 'https://' + processedEmbedUrl.substring(7);
+                }
+
+                // Add necessary YouTube API parameters if not already present
+                let params = 'enablejsapi=1&origin=https://ihamzal.github.io&modestbranding=1'; // Added modestbranding
+                // You can add more parameters here if needed, e.g., &controls=0 to hide controls, but it's not recommended.
+
+                if (!processedEmbedUrl.includes('?')) {
                     processedEmbedUrl += '?';
                 } else {
                     processedEmbedUrl += '&';
                 }
-                // Ensure origin is set to your GitHub Pages domain for API calls if needed later
-                processedEmbedUrl += 'enablejsapi=1&origin=https://ihamzal.github.io';
+                processedEmbedUrl += params;
 
 
                 const roomInfo = {
@@ -972,14 +983,19 @@
         function updateUserList(users) {
             const userListUl = document.getElementById('user-list');
             userListUl.innerHTML = ''; // Clear existing users
-            if (users) {
-                const userNames = Object.keys(users);
-                userNames.forEach(name => {
-                    const userLi = document.createElement('li');
-                    userLi.textContent = name;
-                    userListUl.appendChild(userLi);
-                });
+
+            // FIX: Added check for 'users' object to prevent 'userNames is not defined' error
+            if (!users) {
+                console.warn("updateUserList called with no users data.");
+                return; // Exit if no users object
             }
+
+            const userNames = Object.keys(users);
+            userNames.forEach(name => {
+                const userLi = document.createElement('li');
+                userLi.textContent = name;
+                userListUl.appendChild(userLi);
+            });
             // Update toggle arrow
             const toggleArrow = document.getElementById('toggle-arrow');
             const userListContainer = document.getElementById('floating-user-list-container');
