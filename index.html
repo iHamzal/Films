@@ -723,10 +723,11 @@
         async function createRoom() {
             let embedUrl = document.getElementById('film-link').value.trim();
             // Basic check for YouTube embed URL
-            // Corrected validation to allow for 'http://googleusercontent.com/youtube.com/embed/VIDEO_ID'
-            // or 'http://googleusercontent.com/youtube.com/watch?v=VIDEO_ID' (though embed is preferred)
-            if (!embedUrl || !(embedUrl.startsWith('http://googleusercontent.com/youtube.com/embed/') || embedUrl.startsWith('http://googleusercontent.com/youtube.com/watch?v='))) {
-                document.getElementById('create-error').innerText = "Please enter a valid YouTube embed URL! (e.g., https://www.youtube.com/embed/<VIDEO_ID>)";
+            // Corrected validation to allow for 'https://googleusercontent.com/youtube.com/embed/VIDEO_ID'
+            // or 'https://googleusercontent.com/youtube.com/watch?v=VIDEO_ID' (though embed is preferred)
+            // Added check for both http and https, and then forces https
+            if (!embedUrl || !(embedUrl.includes('youtube.com/embed/') || embedUrl.includes('youtube.com/watch?v='))) {
+                document.getElementById('create-error').innerText = "Please enter a valid YouTube embed URL! (e.g., https://googleusercontent.com/youtube.com/14<VIDEO_ID>)";
                 return;
             }
             const code = generateRoomCode();
@@ -756,6 +757,9 @@
                 // Ensure HTTPS for mixed content security
                 if (processedEmbedUrl.startsWith('http://')) {
                     processedEmbedUrl = 'https://' + processedEmbedUrl.substring(7);
+                } else if (!processedEmbedUrl.startsWith('https://')) {
+                    // Prepend https if no protocol
+                    processedEmbedUrl = 'https://' + processedEmbedUrl;
                 }
 
                 // Add necessary YouTube API parameters if not already present
@@ -764,7 +768,7 @@
 
                 if (!processedEmbedUrl.includes('?')) {
                     processedEmbedUrl += '?';
-                } else {
+                } else if (!processedEmbedUrl.endsWith('?') && !processedEmbedUrl.endsWith('&')) {
                     processedEmbedUrl += '&';
                 }
                 processedEmbedUrl += params;
@@ -788,7 +792,7 @@
                 document.getElementById('create-error').innerText = "";
                 myRole = 'host';
                 myRoom = code;
-                myFilm = processedEmbedUrl; // This line was previously truncated. Ensuring it's complete.
+                myFilm = processedEmbedUrl;
 
             } catch (error) {
                 console.error("Error creating room:", error);
