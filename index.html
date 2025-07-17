@@ -144,16 +144,7 @@
             transform: translateY(0);
             box-shadow: 0 2px 5px rgba(0, 0, 0, 0.4);
         }
-        button {
-    background: linear-gradient(145deg, var(--accent-color), var(--button-hover-color));
-    color: var(--dark-bg);
-}
-
-        }
-        button[onclick*="main-menu"]:hover {
-            background: linear-gradient(145deg, #a12a2a, #d32f2f);
-            transform: translateY(-3px);
-        }
+        /* Removed the specific style for button[onclick*="main-menu"] */
         #username-error, #create-error, #join-error {
             color: var(--error-color);
             font-weight: 600;
@@ -572,6 +563,7 @@
                                 width="100%" height="400px"
                                 controls
                                 preload="auto"
+                                playsinline muted
                                 style="display: block; margin: 0 auto 30px auto; border-radius: 10px; box-shadow: 0 8px 25px var(--shadow-color-dark); border: 2px solid var(--border-color);"
                     >
                         Your browser does not support the video tag.
@@ -639,6 +631,7 @@
         let myFilm = null; // This will now store the generic video URL
         let unsubscribeFromRoomUpdates = null;
         let timeUpdateInterval = null; // To store the interval for sending time updates
+        let isUpdatingVideo = false; // Flag to prevent self-triggering video updates, useful even without full sync
 
         document.addEventListener('DOMContentLoaded', function() {
             checkUsername();
@@ -646,21 +639,6 @@
             if (chatInput) {
                 chatInput.addEventListener('keypress', sendChatMessage);
             }
-
-            // REMOVED: Video player event listeners for playback state and time updates
-            // (since we don't want synchronization)
-            // const videoPlayer = document.getElementById('html5-film-player');
-            // videoPlayer.addEventListener('play', () => updatePlaybackState(true));
-            // videoPlayer.addEventListener('pause', () => updatePlaybackState(false));
-            // videoPlayer.addEventListener('seeking', () => updatePlaybackTime());
-            // videoPlayer.addEventListener('timeupdate', () => {
-            //     if (!timeUpdateInterval) {
-            //         timeUpdateInterval = setTimeout(() => {
-            //             updatePlaybackTime();
-            //             timeUpdateInterval = null;
-            //         }, 2000);
-            //     }
-            // });
         });
 
 
@@ -685,6 +663,16 @@
                     clearTimeout(timeUpdateInterval);
                     timeUpdateInterval = null;
                 }
+                // Stop the video and reset its source when leaving the room
+                const videoPlayer = document.getElementById('html5-film-player');
+                if (videoPlayer) {
+                    videoPlayer.pause();
+                    videoPlayer.removeAttribute('src'); // Clear the source
+                    videoPlayer.load(); // Reload to clear player
+                }
+                myRoom = null; // Reset room on screen change if not entering a room
+                myRole = null;
+                myFilm = null;
             }
         }
 
@@ -720,13 +708,12 @@
             return Math.random().toString(36).substr(2, 4).toUpperCase();
         }
 
-        // --- NEW/MODIFIED: Create Room for Generic Video URL (including Google Drive) ---
         async function createRoom() {
             let videoUrl = document.getElementById('film-link').value.trim();
 
             // Basic validation for any http/https URL
             if (!videoUrl || !(videoUrl.startsWith('http://') || videoUrl.startsWith('https://'))) {
-                document.getElementById('create-error').innerText = "Please enter a valid video URL (must start with http:// or https://)";
+                document.getElementById('create-error').innerText = "Hat Link m9ad"; // MODIFIED ERROR MESSAGE
                 return;
             }
 
@@ -794,7 +781,6 @@
             }
         }
 
-        // --- MODIFIED: Join Room to get generic video URL ---
         async function joinRoom() {
             let code = document.getElementById('join-code').value.trim().toUpperCase();
             if (!code) {
@@ -833,19 +819,23 @@
             }
         }
 
-        // --- MODIFIED: Go to Room to load HTML5 video player ---
         function goToRoom() {
             document.getElementById('current-room-code').innerText = myRoom;
-            // CHANGED: Target the HTML5 video player
             const videoPlayer = document.getElementById('html5-film-player');
             videoPlayer.src = myFilm; // Load the film
             videoPlayer.load(); // Load the video source
-            // You might want to auto-play here, but browsers often block it without user interaction
-            // videoPlayer.play();
+
+            // Attempt to play the video. This might fail on iOS without a direct user gesture
+            // for unmuted videos, but is necessary for muted autoplay or subsequent plays.
+            videoPlayer.play().catch(e => {
+                console.warn("Video play failed (likely requires user interaction on iOS):", e);
+                // Optionally show a message to the user: "Tap video to play"
+            });
+
             showScreen('room');
             listenForRoomUpdates();
 
-            // NEW: Add time update listener ONLY if we want individual user times
+            // Add time update listener ONLY if we want individual user times
             // This will ensure the "hh:mm:ss" in the user list still updates for each person
             const videoPlayerInRoom = document.getElementById('html5-film-player');
             videoPlayerInRoom.addEventListener('timeupdate', () => {
@@ -858,7 +848,6 @@
             });
         }
 
-        // Keep updatePlaybackTime to update individual user's time for the list display
         async function updatePlaybackTime() {
             if (myRoom && myName) {
                 const videoPlayer = document.getElementById('html5-film-player');
@@ -874,22 +863,6 @@
                 }
             }
         }
-
-        // REMOVED: updatePlaybackState (no longer needed if not syncing)
-        /*
-        async function updatePlaybackState(isPlaying) {
-            if (myRoom && myName && myRole === 'host') {
-                try {
-                    const roomRef = db.collection('rooms').doc(myRoom);
-                    await roomRef.update({
-                        isPlaying: isPlaying
-                    });
-                } catch (error) {
-                    console.error("Error updating playback state:", error);
-                }
-            }
-        }
-        */
 
         async function leaveRoom() {
             if (myRoom && myName) {
@@ -907,13 +880,13 @@
                     myFilm = null;
                     document.getElementById('chat-messages').innerHTML = '';
                     document.getElementById('user-list').innerHTML = '';
-                    // CHANGED: Stop video playback when leaving room
+                    // Stop video playback when leaving room
                     const videoPlayer = document.getElementById('html5-film-player');
                     videoPlayer.pause();
                     videoPlayer.removeAttribute('src'); // Clear the source
                     videoPlayer.load(); // Reload to clear player
 
-                    // NEW: Clear interval if leaving room
+                    // Clear interval if leaving room
                     if (timeUpdateInterval) {
                         clearTimeout(timeUpdateInterval);
                         timeUpdateInterval = null;
@@ -938,35 +911,18 @@
                     const roomData = docSnapshot.data();
 
                     updateChat(roomData.messages);
-                    // MODIFIED: Pass users data to update list
                     updateUserList(roomData.users);
 
-                    // CHANGED: Update HTML5 video player source if different
                     const videoPlayer = document.getElementById('html5-film-player');
-                    if (videoPlayer.src !== roomData.film) {
+                    if (videoPlayer.src !== roomData.film) { // Check if film link has changed
                         videoPlayer.src = roomData.film;
                         videoPlayer.load(); // Load new source
+                        // Attempt to play if the source changed and it was previously playing,
+                        // but catch potential errors for iOS user gesture requirements.
+                        videoPlayer.play().catch(e => {
+                            console.warn("Video play failed after source change (iOS may require user interaction):", e);
+                        });
                     }
-
-                    // REMOVED: All client-side video playback synchronization logic
-                    /*
-                    if (myRole === 'client') {
-                        if (roomData.isPlaying && videoPlayer.paused) {
-                            videoPlayer.play().catch(e => console.log("Play failed (likely user interaction needed):", e));
-                        } else if (!roomData.isPlaying && !videoPlayer.paused) {
-                            videoPlayer.pause();
-                        }
-                        const timeDifference = Math.abs(videoPlayer.currentTime - roomData.currentFilmTime);
-                        if (timeDifference > 3 || (timeDifference > 0.5 && !roomData.isPlaying)) {
-                            videoPlayer.currentTime = roomData.currentFilmTime;
-                        }
-                    } else if (myRole === 'host') {
-                        const hostCurrentTime = videoPlayer.currentTime;
-                        if (Math.abs(hostCurrentTime - roomData.currentFilmTime) > 1) {
-                             roomRef.update({ currentFilmTime: hostCurrentTime });
-                        }
-                    }
-                    */
 
                 } else {
                     alert("The room you were in no longer exists.");
@@ -979,7 +935,6 @@
             });
         }
 
-        // sendChatMessage function updated to use new Date() for timestamp
         async function sendChatMessage(event) {
             // Check for event existence and key, or if it's a direct button click
             if (event && event.type === 'keypress' && event.key !== 'Enter') {
@@ -1092,7 +1047,6 @@
 
             return parts.map(part => part.toString().padStart(2, '0')).join(':');
         }
-
 
         function toggleUserList() {
             const userListContainer = document.getElementById('floating-user-list-container');
