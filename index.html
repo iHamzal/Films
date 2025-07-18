@@ -586,6 +586,9 @@
                     >
                         Your browser does not support the video tag.
                     </video>
+                    <button id="ios-play-button" onclick="forcePlayOnIOS()" style="display: none; margin: 10px auto; padding: 10px 20px; background: var(--accent-color); color: white; border: none; border-radius: 5px; cursor: pointer;">
+                        Tap to Play Video (iOS)
+                    </button>
                     <div id="chat">
                         <h4>Chat</h4>
                         <div id="chat-messages"></div>
@@ -889,9 +892,12 @@
             // iOS-specific video event handling
             videoPlayer.addEventListener('error', function(e) {
                 console.error('Video error on iOS:', e);
+                console.error('Error details:', videoPlayer.error);
+                
                 // Try alternative URL format for iOS
                 if (processedVideoUrl.includes('dropbox.com')) {
                     const alternativeUrl = processedVideoUrl.replace('?dl=1', '?raw=1');
+                    console.log('Trying alternative Dropbox URL:', alternativeUrl);
                     videoPlayer.src = alternativeUrl;
                     videoPlayer.load();
                 }
@@ -901,6 +907,41 @@
             videoPlayer.addEventListener('canplay', function() {
                 console.log('Video can play on iOS');
             });
+            
+            // Add more detailed event listeners for iOS debugging
+            videoPlayer.addEventListener('loadstart', function() {
+                console.log('iOS: Video load started');
+            });
+            
+            videoPlayer.addEventListener('loadedmetadata', function() {
+                console.log('iOS: Video metadata loaded');
+            });
+            
+            videoPlayer.addEventListener('loadeddata', function() {
+                console.log('iOS: Video data loaded');
+            });
+            
+            videoPlayer.addEventListener('canplaythrough', function() {
+                console.log('iOS: Video can play through');
+            });
+            
+            videoPlayer.addEventListener('waiting', function() {
+                console.log('iOS: Video is waiting for data');
+            });
+            
+            videoPlayer.addEventListener('stalled', function() {
+                console.log('iOS: Video playback stalled');
+            });
+            
+            // Show manual play button for iOS if video doesn't auto-play
+            if (isIOS) {
+                setTimeout(() => {
+                    const iosPlayButton = document.getElementById('ios-play-button');
+                    if (iosPlayButton) {
+                        iosPlayButton.style.display = 'block';
+                    }
+                }, 3000); // Show after 3 seconds if video hasn't started
+            }
             
             showScreen('room');
             listenForRoomUpdates();
@@ -1153,6 +1194,34 @@
             return parts.map(part => part.toString().padStart(2, '0')).join(':');
         }
 
+
+        function forcePlayOnIOS() {
+            const videoPlayer = document.getElementById('html5-film-player');
+            const iosPlayButton = document.getElementById('ios-play-button');
+            
+            console.log('Attempting to force play on iOS...');
+            
+            // Try to play the video
+            videoPlayer.play().then(() => {
+                console.log('Video started playing successfully on iOS');
+                if (iosPlayButton) {
+                    iosPlayButton.style.display = 'none';
+                }
+            }).catch(error => {
+                console.error('Failed to play video on iOS:', error);
+                // Try reloading the video source
+                const currentSrc = videoPlayer.src;
+                videoPlayer.src = '';
+                videoPlayer.load();
+                setTimeout(() => {
+                    videoPlayer.src = currentSrc;
+                    videoPlayer.load();
+                    videoPlayer.play().catch(e => {
+                        console.error('Still failed after reload:', e);
+                    });
+                }, 1000);
+            });
+        }
 
         function toggleUserList() {
             const userListContainer = document.getElementById('floating-user-list-container');
