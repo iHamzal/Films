@@ -784,6 +784,47 @@
             
             return processedUrl;
         }
+        
+        // Function to check if video format is supported by iOS
+        function isVideoFormatSupportedByIOS(videoUrl) {
+            const supportedFormats = ['.mp4', '.m4v', '.mov', '.3gp'];
+            const url = videoUrl.toLowerCase();
+            
+            // Check if URL contains supported format
+            for (let format of supportedFormats) {
+                if (url.includes(format)) {
+                    return true;
+                }
+            }
+            
+            // If no format extension found, assume it might be supported
+            return true;
+        }
+        
+        // Function to get alternative video formats for iOS
+        function getAlternativeVideoFormats(originalUrl) {
+            const alternatives = [];
+            
+            // For Dropbox, try different parameter combinations
+            if (originalUrl.includes('dropbox.com')) {
+                const baseUrl = originalUrl.split('?')[0];
+                alternatives.push(baseUrl + '?dl=1');
+                alternatives.push(baseUrl + '?raw=1');
+                alternatives.push(originalUrl.replace('?dl=0', '?dl=1'));
+            }
+            
+            // For Google Drive, try different export formats
+            if (originalUrl.includes('drive.google.com')) {
+                const fileIdMatch = originalUrl.match(/\/d\/([a-zA-Z0-9_-]+)/);
+                if (fileIdMatch && fileIdMatch[1]) {
+                    const fileId = fileIdMatch[1];
+                    alternatives.push(`https://drive.google.com/uc?export=download&id=${fileId}`);
+                    alternatives.push(`https://drive.google.com/uc?export=download&confirm=t&id=${fileId}`);
+                }
+            }
+            
+            return alternatives;
+        }
 
         // --- NEW/MODIFIED: Create Room for Generic Video URL (including Google Drive) ---
         async function createRoom() {
@@ -888,6 +929,10 @@
             // CHANGED: Target the HTML5 video player with iOS-specific handling
             const videoPlayer = document.getElementById('html5-film-player');
             
+            // Reset alternative format attempts for new room
+            alternativeFormatAttempts = 0;
+            alternativeFormats = [];
+            
             // Process the video URL for iOS compatibility
             const processedVideoUrl = processVideoUrlForIOS(myFilm);
             
@@ -912,15 +957,8 @@
                 updateDebugStatus(errorMessage);
                 updateDebugError(errorMessage);
                 
-                // Try alternative URL format for iOS
-                if (processedVideoUrl.includes('dropbox.com')) {
-                    const alternativeUrl = processedVideoUrl.replace('?dl=1', '?raw=1');
-                    console.log('Trying alternative Dropbox URL:', alternativeUrl);
-                    updateDebugStatus('Trying alternative URL...');
-                    updateDebugUrl(alternativeUrl);
-                    videoPlayer.src = alternativeUrl;
-                    videoPlayer.load();
-                }
+                // Try alternative video formats for iOS
+                tryAlternativeVideoFormats(processedVideoUrl, videoPlayer);
             });
             
             // iOS requires user interaction to play video
@@ -1254,6 +1292,40 @@
                 const debugError = document.getElementById('debug-error');
                 if (debugError) {
                     debugError.textContent = 'Error: ' + error;
+                }
+            }
+        }
+        
+        // Global variable to track alternative format attempts
+        let alternativeFormatAttempts = 0;
+        let alternativeFormats = [];
+        
+        function tryAlternativeVideoFormats(originalUrl, videoPlayer) {
+            if (alternativeFormatAttempts === 0) {
+                // First time trying alternatives
+                alternativeFormats = getAlternativeVideoFormats(originalUrl);
+                console.log('Alternative formats to try:', alternativeFormats);
+            }
+            
+            if (alternativeFormatAttempts < alternativeFormats.length) {
+                const nextUrl = alternativeFormats[alternativeFormatAttempts];
+                alternativeFormatAttempts++;
+                
+                console.log(`Trying alternative format ${alternativeFormatAttempts}:`, nextUrl);
+                updateDebugStatus(`Trying format ${alternativeFormatAttempts}/${alternativeFormats.length}...`);
+                updateDebugUrl(nextUrl);
+                
+                videoPlayer.src = nextUrl;
+                videoPlayer.load();
+            } else {
+                // All alternatives tried, show final error
+                updateDebugStatus('All video formats failed. Video may not be compatible with iOS.');
+                updateDebugError('Try converting video to MP4 (H.264) format');
+                
+                // Show a helpful message to the user
+                const debugInfo = document.getElementById('ios-debug-info');
+                if (debugInfo) {
+                    debugInfo.innerHTML += '<br><br><strong>💡 Tip:</strong> iOS works best with MP4 videos. Try converting your video to MP4 format.';
                 }
             }
         }
