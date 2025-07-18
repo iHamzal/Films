@@ -577,7 +577,6 @@
                                 x5-playsinline
                                 x5-video-player-type="h5"
                                 x5-video-player-fullscreen="true"
-                                muted
                                 style="display: block; margin: 0 auto 30px auto; border-radius: 10px; box-shadow: 0 8px 25px var(--shadow-color-dark); border: 2px solid var(--border-color);"
                     >
                         Your browser does not support the video tag.
@@ -1039,6 +1038,17 @@
                         iosPlayButton.style.display = 'block';
                     }
                 }, 3000); // Show after 3 seconds if video hasn't started
+            } else {
+                // Show debug info for PC too
+                const debugInfo = document.getElementById('ios-debug-info');
+                const debugStatus = document.getElementById('debug-status');
+                const debugUrl = document.getElementById('debug-url');
+                
+                if (debugInfo) {
+                    debugInfo.style.display = 'block';
+                    debugStatus.textContent = 'Loading video on PC...';
+                    debugUrl.textContent = 'URL: ' + processedVideoUrl;
+                }
             }
             
             // Attempt to play the video. This might fail on iOS without a direct user gesture
