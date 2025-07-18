@@ -194,11 +194,6 @@
             box-shadow: 0 8px 25px var(--shadow-color-dark); /* Deeper shadow */
             border: 2px solid var(--border-color); /* Thicker border */
             transition: box-shadow 0.3s ease, border-color 0.3s ease;
-            /* iOS-specific video styling */
-            -webkit-transform: translateZ(0); /* Force hardware acceleration on iOS */
-            transform: translateZ(0);
-            -webkit-backface-visibility: hidden; /* Prevent flickering on iOS */
-            backface-visibility: hidden;
         }
         #html5-film-player:focus {
             border-color: var(--accent-color);
@@ -582,6 +577,7 @@
                                 x5-playsinline
                                 x5-video-player-type="h5"
                                 x5-video-player-fullscreen="true"
+                                muted
                                 style="display: block; margin: 0 auto 30px auto; border-radius: 10px; box-shadow: 0 8px 25px var(--shadow-color-dark); border: 2px solid var(--border-color);"
                     >
                         Your browser does not support the video tag.
@@ -662,6 +658,10 @@
         // Detect iOS device
         const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) || 
                      (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+        
+        // Global variable to track alternative format attempts
+        let alternativeFormatAttempts = 0;
+        let alternativeFormats = [];
 
         document.addEventListener('DOMContentLoaded', function() {
             checkUsername();
@@ -708,6 +708,16 @@
                     clearTimeout(timeUpdateInterval);
                     timeUpdateInterval = null;
                 }
+                // Stop the video and reset its source when leaving the room
+                const videoPlayer = document.getElementById('html5-film-player');
+                if (videoPlayer) {
+                    videoPlayer.pause();
+                    videoPlayer.removeAttribute('src'); // Clear the source
+                    videoPlayer.load(); // Reload to clear player
+                }
+                myRoom = null; // Reset room on screen change if not entering a room
+                myRole = null;
+                myFilm = null;
             }
         }
 
@@ -743,30 +753,25 @@
             return Math.random().toString(36).substr(2, 4).toUpperCase();
         }
 
-        // Function to process video URLs for iOS compatibility
-        function processVideoUrlForIOS(originalUrl) {
+        // Function to process video URLs for better compatibility
+        function processVideoUrl(originalUrl) {
             let processedUrl = originalUrl;
             
             // Only apply iOS-specific processing if on iOS
-            if (!isIOS) {
-                return processedUrl;
+            if (isIOS) {
+                console.log("Processing video URL for iOS device");
             }
             
-            console.log("Processing video URL for iOS device");
-            
-            // Handle Dropbox URLs for iOS
+            // Handle Dropbox URLs
             if (processedUrl.includes('dropbox.com')) {
-                // Convert Dropbox sharing links to direct download links for iOS
-                if (processedUrl.includes('?dl=0') || processedUrl.includes('?dl=1')) {
-                    processedUrl = processedUrl.replace('?dl=0', '?dl=1').replace('?dl=1', '?dl=1');
-                } else {
+                // Convert Dropbox sharing links to direct download links
+                if (processedUrl.includes('?dl=0')) {
+                    processedUrl = processedUrl.replace('?dl=0', '?dl=1');
+                } else if (!processedUrl.includes('?dl=1')) {
                     // Add dl=1 parameter if not present
                     processedUrl += (processedUrl.includes('?') ? '&' : '?') + 'dl=1';
                 }
-                
-                // For iOS, we need to ensure proper CORS headers
-                // Dropbox direct links work better with dl=1 parameter
-                console.log("Processed Dropbox URL for iOS:", processedUrl);
+                console.log("Processed Dropbox URL:", processedUrl);
             }
             
             // Handle Google Drive URLs
@@ -787,7 +792,7 @@
         
         // Function to check if video format is supported by iOS
         function isVideoFormatSupportedByIOS(videoUrl) {
-            const supportedFormats = ['.mp4', '.m4v', '.mov', '.3gp'];
+            const supportedFormats = ['.mp4', '.m4v', '.mov', '.3gp', '.mpeg', '.mpg'];
             const url = videoUrl.toLowerCase();
             
             // Check if URL contains supported format
@@ -806,6 +811,7 @@
             const url = videoUrl.toLowerCase();
             
             if (url.includes('.mp4')) return 'MP4';
+            if (url.includes('.mpeg') || url.includes('.mpg')) return 'MPEG';
             if (url.includes('.avi')) return 'AVI';
             if (url.includes('.mkv')) return 'MKV';
             if (url.includes('.mov')) return 'MOV';
@@ -849,7 +855,7 @@
 
             // Basic validation for any http/https URL
             if (!videoUrl || !(videoUrl.startsWith('http://') || videoUrl.startsWith('https://'))) {
-                document.getElementById('create-error').innerText = "Please enter a valid video URL (must start with http:// or https://)";
+                document.getElementById('create-error').innerText = "Hat Link m9ad";
                 return;
             }
 
@@ -868,8 +874,8 @@
                     return;
                 }
 
-                // Process video URL for iOS compatibility
-                videoUrl = processVideoUrlForIOS(videoUrl);
+                // Process the video URL for better compatibility
+                videoUrl = processVideoUrl(videoUrl);
 
 
                 const roomInfo = {
@@ -943,15 +949,15 @@
         function goToRoom() {
             document.getElementById('current-room-code').innerText = myRoom;
             
-            // CHANGED: Target the HTML5 video player with iOS-specific handling
-            const videoPlayer = document.getElementById('html5-film-player');
-            
             // Reset alternative format attempts for new room
             alternativeFormatAttempts = 0;
             alternativeFormats = [];
             
+            // CHANGED: Target the HTML5 video player with iOS-specific handling
+            const videoPlayer = document.getElementById('html5-film-player');
+            
             // Process the video URL for iOS compatibility
-            const processedVideoUrl = processVideoUrlForIOS(myFilm);
+            const processedVideoUrl = processVideoUrl(myFilm);
             
             // Set video source with error handling for iOS
             videoPlayer.src = processedVideoUrl;
@@ -981,6 +987,7 @@
             // iOS requires user interaction to play video
             videoPlayer.addEventListener('canplay', function() {
                 console.log('Video can play on iOS');
+                updateDebugStatus('Video can play on iOS');
             });
             
             // Add more detailed event listeners for iOS debugging
@@ -1033,6 +1040,13 @@
                     }
                 }, 3000); // Show after 3 seconds if video hasn't started
             }
+            
+            // Attempt to play the video. This might fail on iOS without a direct user gesture
+            // for unmuted videos, but is necessary for muted autoplay or subsequent plays.
+            videoPlayer.play().catch(e => {
+                console.warn("Video play failed (likely requires user interaction on iOS):", e);
+                // Optionally show a message to the user: "Tap video to play"
+            });
             
             showScreen('room');
             listenForRoomUpdates();
@@ -1138,27 +1152,12 @@
                     if (videoPlayer.src !== roomData.film) {
                         videoPlayer.src = roomData.film;
                         videoPlayer.load(); // Load new source
+                        // Attempt to play if the source changed and it was previously playing,
+                        // but catch potential errors for iOS user gesture requirements.
+                        videoPlayer.play().catch(e => {
+                            console.warn("Video play failed after source change (iOS may require user interaction):", e);
+                        });
                     }
-
-                    // REMOVED: All client-side video playback synchronization logic
-                    /*
-                    if (myRole === 'client') {
-                        if (roomData.isPlaying && videoPlayer.paused) {
-                            videoPlayer.play().catch(e => console.log("Play failed (likely user interaction needed):", e));
-                        } else if (!roomData.isPlaying && !videoPlayer.paused) {
-                            videoPlayer.pause();
-                        }
-                        const timeDifference = Math.abs(videoPlayer.currentTime - roomData.currentFilmTime);
-                        if (timeDifference > 3 || (timeDifference > 0.5 && !roomData.isPlaying)) {
-                            videoPlayer.currentTime = roomData.currentFilmTime;
-                        }
-                    } else if (myRole === 'host') {
-                        const hostCurrentTime = videoPlayer.currentTime;
-                        if (Math.abs(hostCurrentTime - roomData.currentFilmTime) > 1) {
-                             roomRef.update({ currentFilmTime: hostCurrentTime });
-                        }
-                    }
-                    */
 
                 } else {
                     alert("The room you were in no longer exists.");
@@ -1312,10 +1311,6 @@
                 }
             }
         }
-        
-        // Global variable to track alternative format attempts
-        let alternativeFormatAttempts = 0;
-        let alternativeFormats = [];
         
         function tryAlternativeVideoFormats(originalUrl, videoPlayer) {
             if (alternativeFormatAttempts === 0) {
