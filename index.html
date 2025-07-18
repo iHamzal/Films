@@ -801,6 +801,23 @@
             return true;
         }
         
+        // Function to detect video format from URL
+        function detectVideoFormat(videoUrl) {
+            const url = videoUrl.toLowerCase();
+            
+            if (url.includes('.mp4')) return 'MP4';
+            if (url.includes('.avi')) return 'AVI';
+            if (url.includes('.mkv')) return 'MKV';
+            if (url.includes('.mov')) return 'MOV';
+            if (url.includes('.wmv')) return 'WMV';
+            if (url.includes('.flv')) return 'FLV';
+            if (url.includes('.webm')) return 'WebM';
+            if (url.includes('.m4v')) return 'M4V';
+            if (url.includes('.3gp')) return '3GP';
+            
+            return 'Unknown';
+        }
+        
         // Function to get alternative video formats for iOS
         function getAlternativeVideoFormats(originalUrl) {
             const alternatives = [];
@@ -1319,13 +1336,27 @@
                 videoPlayer.load();
             } else {
                 // All alternatives tried, show final error
-                updateDebugStatus('All video formats failed. Video may not be compatible with iOS.');
+                const detectedFormat = detectVideoFormat(originalUrl);
+                updateDebugStatus(`All video formats failed. Detected format: ${detectedFormat}`);
                 updateDebugError('Try converting video to MP4 (H.264) format');
                 
                 // Show a helpful message to the user
                 const debugInfo = document.getElementById('ios-debug-info');
                 if (debugInfo) {
+                    debugInfo.innerHTML += `<br><br><strong>🎬 Detected Format:</strong> ${detectedFormat}`;
                     debugInfo.innerHTML += '<br><br><strong>💡 Tip:</strong> iOS works best with MP4 videos. Try converting your video to MP4 format.';
+                    debugInfo.innerHTML += '<br><br><strong>🔧 Quick Fix:</strong> Use online converters like:';
+                    debugInfo.innerHTML += '<br>• <a href="https://convertio.co/" target="_blank" style="color: #00BFFF;">Convertio.co</a>';
+                    debugInfo.innerHTML += '<br>• <a href="https://www.onlinevideoconverter.com/" target="_blank" style="color: #00BFFF;">OnlineVideoConverter.com</a>';
+                    debugInfo.innerHTML += '<br>• <a href="https://cloudconvert.com/" target="_blank" style="color: #00BFFF;">CloudConvert.com</a>';
+                    debugInfo.innerHTML += '<br><br><strong>📱 iOS Requirements:</strong>';
+                    debugInfo.innerHTML += '<br>• Format: MP4 (H.264)';
+                    debugInfo.innerHTML += '<br>• Audio: AAC';
+                    debugInfo.innerHTML += '<br>• Resolution: Up to 4K';
+                    
+                    if (detectedFormat !== 'MP4') {
+                        debugInfo.innerHTML += `<br><br><strong>⚠️ Problem:</strong> Your video is ${detectedFormat} format, but iOS needs MP4 (H.264) format.`;
+                    }
                 }
             }
         }
