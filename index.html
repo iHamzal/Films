@@ -569,7 +569,7 @@
                     <video id="html5-film-player"
                                 width="100%" height="400px"
                                 controls
-                                preload="metadata"
+                                preload="auto"
                                 playsinline
                                 webkit-playsinline
                                 x5-playsinline
@@ -749,55 +749,61 @@
             return Math.random().toString(36).substr(2, 4).toUpperCase();
         }
 
-        // Function to process video URLs for better compatibility
+        // OPTIMIZATION: Add URL cache to avoid repeated processing
+        const urlCache = new Map();
+
+        // Function to process video URLs for better compatibility (OPTIMIZED)
         function processVideoUrl(originalUrl) {
+            // Check cache first
+            if (urlCache.has(originalUrl)) {
+                console.log("Using cached URL:", originalUrl);
+                return urlCache.get(originalUrl);
+            }
+            
             let processedUrl = originalUrl;
             
-            console.log("Original URL:", originalUrl);
+            console.log("Processing URL:", originalUrl);
             
-            // Only apply iOS-specific processing if on iOS
-            if (isIOS) {
-                console.log("Processing video URL for iOS device");
-            }
+            // OPTIMIZATION: Use more efficient string operations
+            const isDropbox = processedUrl.includes('dropbox.com');
+            const isGoogleDrive = processedUrl.includes('drive.google.com');
             
-            // Handle Dropbox URLs
-            if (processedUrl.includes('dropbox.com')) {
-                console.log("Detected Dropbox URL, processing...");
+            // Handle Dropbox URLs (OPTIMIZED)
+            if (isDropbox) {
+                console.log("Processing Dropbox URL...");
                 
-                // Convert Dropbox sharing links to direct download links
+                // OPTIMIZATION: Use more efficient URL manipulation
                 if (processedUrl.includes('?dl=0')) {
                     processedUrl = processedUrl.replace('?dl=0', '?dl=1');
-                    console.log("Changed dl=0 to dl=1");
                 } else if (!processedUrl.includes('?dl=1')) {
-                    // Add dl=1 parameter if not present
                     processedUrl += (processedUrl.includes('?') ? '&' : '?') + 'dl=1';
-                    console.log("Added dl=1 parameter");
                 }
                 
-                // For MPEG files, try alternative formats
-                if (processedUrl.includes('.mpeg') || processedUrl.includes('.mpg')) {
-                    console.log("MPEG file detected, trying alternative formats...");
-                    // Try raw=1 instead of dl=1 for MPEG files
-                    const alternativeUrl = processedUrl.replace('?dl=1', '?raw=1');
-                    console.log("Alternative URL:", alternativeUrl);
+                console.log("Processed Dropbox URL:", processedUrl);
+            }
+            
+            // Handle Google Drive URLs (OPTIMIZED)
+            if (isGoogleDrive) {
+                console.log("Processing Google Drive URL...");
+                
+                // OPTIMIZATION: More efficient regex with early return
+                if (processedUrl.includes('/view')) {
+                    const fileIdMatch = processedUrl.match(/\/d\/([a-zA-Z0-9_-]+)\/view/);
+                    if (fileIdMatch && fileIdMatch[1]) {
+                        processedUrl = `https://drive.google.com/uc?export=download&id=${fileIdMatch[1]}`;
+                    }
+                } else if (processedUrl.includes('/file/d/')) {
+                    const fileIdMatch = processedUrl.match(/\/file\/d\/([a-zA-Z0-9_-]+)/);
+                    if (fileIdMatch && fileIdMatch[1]) {
+                        processedUrl = `https://drive.google.com/uc?export=download&id=${fileIdMatch[1]}`;
+                    }
                 }
                 
-                console.log("Final processed Dropbox URL:", processedUrl);
+                console.log("Processed Google Drive URL:", processedUrl);
             }
             
-            // Handle Google Drive URLs
-            if (processedUrl.includes('drive.google.com') && processedUrl.includes('/view')) {
-                const fileIdMatch = processedUrl.match(/\/d\/([a-zA-Z0-9_-]+)\/view/);
-                if (fileIdMatch && fileIdMatch[1]) {
-                    processedUrl = `https://drive.google.com/uc?export=download&id=${fileIdMatch[1]}`;
-                }
-            } else if (processedUrl.includes('drive.google.com') && processedUrl.includes('/file/d/')) {
-                const fileIdMatch = processedUrl.match(/\/file\/d\/([a-zA-Z0-9_-]+)/);
-                if (fileIdMatch && fileIdMatch[1]) {
-                    processedUrl = `https://drive.google.com/uc?export=download&id=${fileIdMatch[1]}`;
-                }
-            }
-            
+            // Cache the result
+            urlCache.set(originalUrl, processedUrl);
             console.log("Final processed URL:", processedUrl);
             return processedUrl;
         }
@@ -908,7 +914,6 @@
                 // Process the video URL for better compatibility
                 videoUrl = processVideoUrl(videoUrl);
 
-
                 const roomInfo = {
                     film: videoUrl, // Store the processed video URL
                     host: myName,
@@ -930,6 +935,13 @@
                 myRole = 'host';
                 myRoom = code;
                 myFilm = videoUrl; // Set myFilm to the processed URL
+
+                // OPTIMIZATION: Start preloading video immediately after room creation
+                const videoPlayer = document.getElementById('html5-film-player');
+                if (videoPlayer) {
+                    videoPlayer.src = videoUrl;
+                    videoPlayer.load();
+                }
 
             } catch (error) {
                 console.error("Error creating room:", error);
@@ -968,6 +980,14 @@
                 myRole = 'client';
                 myFilm = roomData.film; // Get film URL from Firestore (now it's a generic video URL)
 
+                // OPTIMIZATION: Start preloading video immediately after joining
+                const videoPlayer = document.getElementById('html5-film-player');
+                if (videoPlayer && myFilm) {
+                    const processedUrl = processVideoUrl(myFilm);
+                    videoPlayer.src = processedUrl;
+                    videoPlayer.load();
+                }
+
                 goToRoom();
 
             } catch (error) {
@@ -987,18 +1007,30 @@
             // CHANGED: Target the HTML5 video player with iOS-specific handling
             const videoPlayer = document.getElementById('html5-film-player');
             
-            // Process the video URL for iOS compatibility
+            // OPTIMIZATION: Remove all existing event listeners to prevent duplicates
+            videoPlayer.removeEventListener('error', videoPlayer._errorHandler);
+            videoPlayer.removeEventListener('canplay', videoPlayer._canplayHandler);
+            videoPlayer.removeEventListener('loadstart', videoPlayer._loadstartHandler);
+            videoPlayer.removeEventListener('loadedmetadata', videoPlayer._loadedmetadataHandler);
+            videoPlayer.removeEventListener('loadeddata', videoPlayer._loadeddataHandler);
+            videoPlayer.removeEventListener('canplaythrough', videoPlayer._canplaythroughHandler);
+            videoPlayer.removeEventListener('waiting', videoPlayer._waitingHandler);
+            videoPlayer.removeEventListener('stalled', videoPlayer._stalledHandler);
+            
+            // Process the video URL for iOS compatibility (cached for performance)
             const processedVideoUrl = processVideoUrl(myFilm);
             
-            // Set video source with optimized loading
+            // OPTIMIZATION: Set preload to auto for faster loading
+            videoPlayer.preload = 'auto';
+            
+            // OPTIMIZATION: Set video source immediately
             videoPlayer.src = processedVideoUrl;
-            videoPlayer.load(); // Load the video source
             
-            // Optimize loading by setting lower quality initially
-            videoPlayer.preload = 'metadata';
+            // OPTIMIZATION: Start loading immediately
+            videoPlayer.load();
             
-            // iOS-specific video event handling
-            videoPlayer.addEventListener('error', function(e) {
+            // OPTIMIZATION: Create event handlers as properties to avoid duplicates
+            videoPlayer._errorHandler = function(e) {
                 console.error('Video error on iOS:', e);
                 console.error('Error details:', videoPlayer.error);
                 
@@ -1016,44 +1048,52 @@
                 
                 // Try alternative video formats for iOS
                 tryAlternativeVideoFormats(processedVideoUrl, videoPlayer);
-            });
+            };
             
-            // iOS requires user interaction to play video
-            videoPlayer.addEventListener('canplay', function() {
+            videoPlayer._canplayHandler = function() {
                 console.log('Video can play on iOS');
                 updateDebugStatus('Video can play on iOS');
-            });
+            };
             
-            // Add more detailed event listeners for iOS debugging
-            videoPlayer.addEventListener('loadstart', function() {
+            videoPlayer._loadstartHandler = function() {
                 console.log('iOS: Video load started');
                 updateDebugStatus('Video load started');
-            });
+            };
             
-            videoPlayer.addEventListener('loadedmetadata', function() {
+            videoPlayer._loadedmetadataHandler = function() {
                 console.log('iOS: Video metadata loaded');
                 updateDebugStatus('Video metadata loaded');
-            });
+            };
             
-            videoPlayer.addEventListener('loadeddata', function() {
+            videoPlayer._loadeddataHandler = function() {
                 console.log('iOS: Video data loaded');
                 updateDebugStatus('Video data loaded');
-            });
+            };
             
-            videoPlayer.addEventListener('canplaythrough', function() {
+            videoPlayer._canplaythroughHandler = function() {
                 console.log('iOS: Video can play through');
                 updateDebugStatus('Video can play through - Ready!');
-            });
+            };
             
-            videoPlayer.addEventListener('waiting', function() {
+            videoPlayer._waitingHandler = function() {
                 console.log('iOS: Video is waiting for data');
                 updateDebugStatus('Video is waiting for data...');
-            });
+            };
             
-            videoPlayer.addEventListener('stalled', function() {
+            videoPlayer._stalledHandler = function() {
                 console.log('iOS: Video playback stalled');
                 updateDebugStatus('Video playback stalled');
-            });
+            };
+            
+            // Add event listeners with stored references
+            videoPlayer.addEventListener('error', videoPlayer._errorHandler);
+            videoPlayer.addEventListener('canplay', videoPlayer._canplayHandler);
+            videoPlayer.addEventListener('loadstart', videoPlayer._loadstartHandler);
+            videoPlayer.addEventListener('loadedmetadata', videoPlayer._loadedmetadataHandler);
+            videoPlayer.addEventListener('loadeddata', videoPlayer._loadeddataHandler);
+            videoPlayer.addEventListener('canplaythrough', videoPlayer._canplaythroughHandler);
+            videoPlayer.addEventListener('waiting', videoPlayer._waitingHandler);
+            videoPlayer.addEventListener('stalled', videoPlayer._stalledHandler);
             
             // Show debug info and manual play button for iOS (hidden by default)
             if (isIOS) {
@@ -1067,12 +1107,13 @@
                     debugUrl.textContent = 'URL: ' + processedVideoUrl;
                 }
                 
+                // OPTIMIZATION: Reduced timeout for faster response
                 setTimeout(() => {
                     const iosPlayButton = document.getElementById('ios-play-button');
                     if (iosPlayButton) {
                         iosPlayButton.style.display = 'block';
                     }
-                }, 1000); // Reduced from 3 seconds to 1 second
+                }, 500); // Reduced from 1000ms to 500ms
             } else {
                 // Hide debug info for PC too
                 const debugInfo = document.getElementById('ios-debug-info');
@@ -1086,28 +1127,33 @@
                 }
             }
             
-            // Attempt to play the video with optimized settings
+            // OPTIMIZATION: Attempt to play the video immediately with better error handling
             videoPlayer.muted = true; // Mute initially for faster loading
-            videoPlayer.play().then(() => {
-                console.log("Video started playing successfully");
-                // Unmute after successful play
-                setTimeout(() => {
+            
+            // OPTIMIZATION: Use a more aggressive play strategy
+            const playVideo = async () => {
+                try {
+                    await videoPlayer.play();
+                    console.log("Video started playing successfully");
+                    // Unmute after successful play
+                    setTimeout(() => {
+                        videoPlayer.muted = false;
+                    }, 50); // Reduced from 100ms to 50ms
+                } catch (e) {
+                    console.warn("Video play failed (likely requires user interaction on iOS):", e);
+                    // Try unmuted play as fallback
                     videoPlayer.muted = false;
-                }, 100);
-            }).catch(e => {
-                console.warn("Video play failed (likely requires user interaction on iOS):", e);
-                // Try unmuted play as fallback
-                videoPlayer.muted = false;
-                videoPlayer.play().catch(e2 => {
-                    console.warn("Unmuted play also failed:", e2);
-                });
-            });
+                    videoPlayer.play().catch(e2 => {
+                        console.warn("Unmuted play also failed:", e2);
+                    });
+                }
+            };
+            
+            // Start playing immediately
+            playVideo();
             
             showScreen('room');
             listenForRoomUpdates();
-
-            // REMOVED: Time update listener that was causing video looping
-            // Individual user times will not be updated in real-time to prevent conflicts
         }
 
         // Keep updatePlaybackTime to update individual user's time for the list display
@@ -1352,9 +1398,9 @@
         
         function tryAlternativeVideoFormats(originalUrl, videoPlayer) {
             if (alternativeFormatAttempts === 0) {
-                // First time trying alternatives
-                alternativeFormats = getAlternativeVideoFormats(originalUrl);
-                console.log('Alternative formats to try:', alternativeFormats);
+                // OPTIMIZATION: Limit alternatives to most likely working formats
+                alternativeFormats = getAlternativeVideoFormats(originalUrl).slice(0, 2); // Only try first 2 alternatives
+                console.log('Alternative formats to try (limited):', alternativeFormats);
             }
             
             if (alternativeFormatAttempts < alternativeFormats.length) {
@@ -1365,8 +1411,18 @@
                 updateDebugStatus(`Trying format ${alternativeFormatAttempts}/${alternativeFormats.length}...`);
                 updateDebugUrl(nextUrl);
                 
+                // OPTIMIZATION: Set source and load immediately
                 videoPlayer.src = nextUrl;
                 videoPlayer.load();
+                
+                // OPTIMIZATION: Try to play immediately after a short delay
+                setTimeout(() => {
+                    if (videoPlayer.readyState >= 1) { // HAVE_METADATA
+                        videoPlayer.play().catch(e => {
+                            console.warn(`Alternative format ${alternativeFormatAttempts} failed to play:`, e);
+                        });
+                    }
+                }, 1000); // Reduced from longer delays
             } else {
                 // All alternatives tried, show final error
                 const detectedFormat = detectVideoFormat(originalUrl);
