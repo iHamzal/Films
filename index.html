@@ -1193,17 +1193,9 @@
                     // MODIFIED: Pass users data to update list
                     updateUserList(roomData.users);
 
-                    // CHANGED: Update HTML5 video player source if different
-                    const videoPlayer = document.getElementById('html5-film-player');
-                    if (videoPlayer.src !== roomData.film) {
-                        videoPlayer.src = roomData.film;
-                        videoPlayer.load(); // Load new source
-                        // Attempt to play if the source changed and it was previously playing,
-                        // but catch potential errors for iOS user gesture requirements.
-                        videoPlayer.play().catch(e => {
-                            console.warn("Video play failed after source change (iOS may require user interaction):", e);
-                        });
-                    }
+                    // REMOVED: Video source update logic that was causing looping
+                    // The video source should only be set once when entering the room
+                    // No need to constantly check and update it
 
                 } else {
                     alert("The room you were in no longer exists.");
