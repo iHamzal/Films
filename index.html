@@ -670,20 +670,16 @@
                 chatInput.addEventListener('keypress', sendChatMessage);
             }
 
-            // REMOVED: Video player event listeners for playback state and time updates
-            // (since we don't want synchronization)
-            // const videoPlayer = document.getElementById('html5-film-player');
-            // videoPlayer.addEventListener('play', () => updatePlaybackState(true));
-            // videoPlayer.addEventListener('pause', () => updatePlaybackState(false));
-            // videoPlayer.addEventListener('seeking', () => updatePlaybackTime());
-            // videoPlayer.addEventListener('timeupdate', () => {
-            //     if (!timeUpdateInterval) {
-            //         timeUpdateInterval = setTimeout(() => {
-            //             updatePlaybackTime();
-            //             timeUpdateInterval = null;
-            //         }, 2000);
-            //     }
-            // });
+            // ADD BACK: Video player event listeners for time updates (for user list display only)
+            const videoPlayer = document.getElementById('html5-film-player');
+            videoPlayer.addEventListener('timeupdate', () => {
+                if (!timeUpdateInterval) {
+                    timeUpdateInterval = setTimeout(() => {
+                        updatePlaybackTime();
+                        timeUpdateInterval = null;
+                    }, 2000);
+                }
+            });
         });
 
 
