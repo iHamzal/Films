@@ -145,10 +145,8 @@
             box-shadow: 0 2px 5px rgba(0, 0, 0, 0.4);
         }
         button {
-    background: linear-gradient(145deg, var(--accent-color), var(--button-hover-color));
-    color: var(--dark-bg);
-}
-
+            background: linear-gradient(145deg, var(--accent-color), var(--button-hover-color));
+            color: var(--dark-bg);
         }
         button[onclick*="main-menu"]:hover {
             background: linear-gradient(145deg, #a12a2a, #d32f2f);
@@ -828,6 +826,7 @@
         function detectVideoFormat(videoUrl) {
             const url = videoUrl.toLowerCase();
             
+            // Check for file extensions first
             if (url.includes('.mp4')) return 'MP4';
             if (url.includes('.mpeg') || url.includes('.mpg')) return 'MPEG';
             if (url.includes('.avi')) return 'AVI';
@@ -838,6 +837,11 @@
             if (url.includes('.webm')) return 'WebM';
             if (url.includes('.m4v')) return 'M4V';
             if (url.includes('.3gp')) return '3GP';
+            
+            // For Google Drive URLs without extensions, assume MP4 if it's a video
+            if (url.includes('drive.google.com/uc?export=download')) {
+                return 'MP4'; // Google Drive direct download links are usually MP4
+            }
             
             return 'Unknown';
         }
