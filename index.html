@@ -584,6 +584,9 @@
                     <button id="ios-play-button" onclick="forcePlayOnIOS()" style="display: none; margin: 10px auto; padding: 10px 20px; background: var(--accent-color); color: white; border: none; border-radius: 5px; cursor: pointer;">
                         Tap to Play Video (iOS)
                     </button>
+                    <button id="test-video-button" onclick="testVideoUrl()" style="display: block; margin: 10px auto; padding: 10px 20px; background: #ff6b35; color: white; border: none; border-radius: 5px; cursor: pointer;">
+                        Test Video URL
+                    </button>
                     <div id="ios-debug-info" style="display: none; background: rgba(0,0,0,0.8); color: white; padding: 10px; margin: 10px 0; border-radius: 5px; font-size: 12px; text-align: left;">
                         <strong>iOS Debug Info:</strong><br>
                         <span id="debug-status">Loading...</span><br>
@@ -756,6 +759,8 @@
         function processVideoUrl(originalUrl) {
             let processedUrl = originalUrl;
             
+            console.log("Original URL:", originalUrl);
+            
             // Only apply iOS-specific processing if on iOS
             if (isIOS) {
                 console.log("Processing video URL for iOS device");
@@ -763,14 +768,27 @@
             
             // Handle Dropbox URLs
             if (processedUrl.includes('dropbox.com')) {
+                console.log("Detected Dropbox URL, processing...");
+                
                 // Convert Dropbox sharing links to direct download links
                 if (processedUrl.includes('?dl=0')) {
                     processedUrl = processedUrl.replace('?dl=0', '?dl=1');
+                    console.log("Changed dl=0 to dl=1");
                 } else if (!processedUrl.includes('?dl=1')) {
                     // Add dl=1 parameter if not present
                     processedUrl += (processedUrl.includes('?') ? '&' : '?') + 'dl=1';
+                    console.log("Added dl=1 parameter");
                 }
-                console.log("Processed Dropbox URL:", processedUrl);
+                
+                // For MPEG files, try alternative formats
+                if (processedUrl.includes('.mpeg') || processedUrl.includes('.mpg')) {
+                    console.log("MPEG file detected, trying alternative formats...");
+                    // Try raw=1 instead of dl=1 for MPEG files
+                    const alternativeUrl = processedUrl.replace('?dl=1', '?raw=1');
+                    console.log("Alternative URL:", alternativeUrl);
+                }
+                
+                console.log("Final processed Dropbox URL:", processedUrl);
             }
             
             // Handle Google Drive URLs
@@ -786,6 +804,7 @@
                 }
             }
             
+            console.log("Final processed URL:", processedUrl);
             return processedUrl;
         }
         
@@ -827,12 +846,25 @@
         function getAlternativeVideoFormats(originalUrl) {
             const alternatives = [];
             
+            console.log("Getting alternative formats for:", originalUrl);
+            
             // For Dropbox, try different parameter combinations
             if (originalUrl.includes('dropbox.com')) {
                 const baseUrl = originalUrl.split('?')[0];
-                alternatives.push(baseUrl + '?dl=1');
-                alternatives.push(baseUrl + '?raw=1');
-                alternatives.push(originalUrl.replace('?dl=0', '?dl=1'));
+                console.log("Base URL:", baseUrl);
+                
+                // For MPEG files, try these combinations
+                if (originalUrl.includes('.mpeg') || originalUrl.includes('.mpg')) {
+                    alternatives.push(baseUrl + '?raw=1');  // Try raw=1 first for MPEG
+                    alternatives.push(baseUrl + '?dl=1');   // Then dl=1
+                    alternatives.push(baseUrl + '?dl=0');   // Then dl=0
+                } else {
+                    alternatives.push(baseUrl + '?dl=1');
+                    alternatives.push(baseUrl + '?raw=1');
+                    alternatives.push(originalUrl.replace('?dl=0', '?dl=1'));
+                }
+                
+                console.log("Dropbox alternatives:", alternatives);
             }
             
             // For Google Drive, try different export formats
@@ -1364,6 +1396,32 @@
                     }
                 }
             }
+        }
+        
+        function testVideoUrl() {
+            const videoPlayer = document.getElementById('html5-film-player');
+            const currentSrc = videoPlayer.src;
+            
+            console.log('=== VIDEO URL TEST ===');
+            console.log('Current video source:', currentSrc);
+            console.log('Video ready state:', videoPlayer.readyState);
+            console.log('Video network state:', videoPlayer.networkState);
+            console.log('Video error:', videoPlayer.error);
+            
+            updateDebugStatus('Testing video URL...');
+            updateDebugUrl('Current: ' + currentSrc);
+            
+            if (videoPlayer.error) {
+                console.error('Video error code:', videoPlayer.error.code);
+                console.error('Video error message:', videoPlayer.error.message);
+                updateDebugError('Error: ' + videoPlayer.error.message);
+            } else {
+                updateDebugError('No error detected');
+            }
+            
+            // Try to load the video again
+            videoPlayer.load();
+            console.log('Video reloaded');
         }
         
         function forcePlayOnIOS() {
