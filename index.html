@@ -569,7 +569,7 @@
                     <video id="html5-film-player"
                                 width="100%" height="400px"
                                 controls
-                                preload="auto"
+                                preload="metadata"
                                 playsinline
                                 webkit-playsinline
                                 x5-playsinline
@@ -582,7 +582,7 @@
                     <button id="ios-play-button" onclick="forcePlayOnIOS()" style="display: none; margin: 10px auto; padding: 10px 20px; background: var(--accent-color); color: white; border: none; border-radius: 5px; cursor: pointer;">
                         Tap to Play Video (iOS)
                     </button>
-                    <button id="test-video-button" onclick="testVideoUrl()" style="display: block; margin: 10px auto; padding: 10px 20px; background: #ff6b35; color: white; border: none; border-radius: 5px; cursor: pointer;">
+                    <button id="test-video-button" onclick="testVideoUrl()" style="display: none; margin: 10px auto; padding: 10px 20px; background: #ff6b35; color: white; border: none; border-radius: 5px; cursor: pointer;">
                         Test Video URL
                     </button>
                     <div id="ios-debug-info" style="display: none; background: rgba(0,0,0,0.8); color: white; padding: 10px; margin: 10px 0; border-radius: 5px; font-size: 12px; text-align: left;">
@@ -670,20 +670,16 @@
                 chatInput.addEventListener('keypress', sendChatMessage);
             }
 
-            // REMOVED: Video player event listeners for playback state and time updates
-            // (since we don't want synchronization)
-            // const videoPlayer = document.getElementById('html5-film-player');
-            // videoPlayer.addEventListener('play', () => updatePlaybackState(true));
-            // videoPlayer.addEventListener('pause', () => updatePlaybackState(false));
-            // videoPlayer.addEventListener('seeking', () => updatePlaybackTime());
-            // videoPlayer.addEventListener('timeupdate', () => {
-            //     if (!timeUpdateInterval) {
-            //         timeUpdateInterval = setTimeout(() => {
-            //             updatePlaybackTime();
-            //             timeUpdateInterval = null;
-            //         }, 2000);
-            //     }
-            // });
+            // ADD BACK: Video player event listeners for time updates (for user list display only)
+            const videoPlayer = document.getElementById('html5-film-player');
+            videoPlayer.addEventListener('timeupdate', () => {
+                if (!timeUpdateInterval) {
+                    timeUpdateInterval = setTimeout(() => {
+                        updatePlaybackTime();
+                        timeUpdateInterval = null;
+                    }, 2000);
+                }
+            });
         });
 
 
@@ -994,9 +990,12 @@
             // Process the video URL for iOS compatibility
             const processedVideoUrl = processVideoUrl(myFilm);
             
-            // Set video source with error handling for iOS
+            // Set video source with optimized loading
             videoPlayer.src = processedVideoUrl;
             videoPlayer.load(); // Load the video source
+            
+            // Optimize loading by setting lower quality initially
+            videoPlayer.preload = 'metadata';
             
             // iOS-specific video event handling
             videoPlayer.addEventListener('error', function(e) {
@@ -1056,14 +1055,14 @@
                 updateDebugStatus('Video playback stalled');
             });
             
-            // Show debug info and manual play button for iOS
+            // Show debug info and manual play button for iOS (hidden by default)
             if (isIOS) {
                 const debugInfo = document.getElementById('ios-debug-info');
                 const debugStatus = document.getElementById('debug-status');
                 const debugUrl = document.getElementById('debug-url');
                 
                 if (debugInfo) {
-                    debugInfo.style.display = 'block';
+                    debugInfo.style.display = 'none'; // Hidden by default
                     debugStatus.textContent = 'Loading video...';
                     debugUrl.textContent = 'URL: ' + processedVideoUrl;
                 }
@@ -1073,25 +1072,35 @@
                     if (iosPlayButton) {
                         iosPlayButton.style.display = 'block';
                     }
-                }, 3000); // Show after 3 seconds if video hasn't started
+                }, 1000); // Reduced from 3 seconds to 1 second
             } else {
-                // Show debug info for PC too
+                // Hide debug info for PC too
                 const debugInfo = document.getElementById('ios-debug-info');
                 const debugStatus = document.getElementById('debug-status');
                 const debugUrl = document.getElementById('debug-url');
                 
                 if (debugInfo) {
-                    debugInfo.style.display = 'block';
+                    debugInfo.style.display = 'none'; // Hidden by default
                     debugStatus.textContent = 'Loading video on PC...';
                     debugUrl.textContent = 'URL: ' + processedVideoUrl;
                 }
             }
             
-            // Attempt to play the video. This might fail on iOS without a direct user gesture
-            // for unmuted videos, but is necessary for muted autoplay or subsequent plays.
-            videoPlayer.play().catch(e => {
+            // Attempt to play the video with optimized settings
+            videoPlayer.muted = true; // Mute initially for faster loading
+            videoPlayer.play().then(() => {
+                console.log("Video started playing successfully");
+                // Unmute after successful play
+                setTimeout(() => {
+                    videoPlayer.muted = false;
+                }, 100);
+            }).catch(e => {
                 console.warn("Video play failed (likely requires user interaction on iOS):", e);
-                // Optionally show a message to the user: "Tap video to play"
+                // Try unmuted play as fallback
+                videoPlayer.muted = false;
+                videoPlayer.play().catch(e2 => {
+                    console.warn("Unmuted play also failed:", e2);
+                });
             });
             
             showScreen('room');
