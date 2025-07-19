@@ -1097,17 +1097,8 @@
             showScreen('room');
             listenForRoomUpdates();
 
-            // NEW: Add time update listener ONLY if we want individual user times
-            // This will ensure the "hh:mm:ss" in the user list still updates for each person
-            const videoPlayerInRoom = document.getElementById('html5-film-player');
-            videoPlayerInRoom.addEventListener('timeupdate', () => {
-                if (!timeUpdateInterval) {
-                    timeUpdateInterval = setTimeout(() => {
-                        updatePlaybackTime();
-                        timeUpdateInterval = null; // Reset for next update
-                    }, 2000); // Update every 2 seconds
-                }
-            });
+            // REMOVED: Time update listener that was causing video looping
+            // Individual user times will not be updated in real-time to prevent conflicts
         }
 
         // Keep updatePlaybackTime to update individual user's time for the list display
