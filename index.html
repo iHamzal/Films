@@ -582,7 +582,7 @@
                     <button id="ios-play-button" onclick="forcePlayOnIOS()" style="display: none; margin: 10px auto; padding: 10px 20px; background: var(--accent-color); color: white; border: none; border-radius: 5px; cursor: pointer;">
                         Tap to Play Video (iOS)
                     </button>
-                    <button id="test-video-button" onclick="testVideoUrl()" style="display: block; margin: 10px auto; padding: 10px 20px; background: #ff6b35; color: white; border: none; border-radius: 5px; cursor: pointer;">
+                    <button id="test-video-button" onclick="testVideoUrl()" style="display: none; margin: 10px auto; padding: 10px 20px; background: #ff6b35; color: white; border: none; border-radius: 5px; cursor: pointer;">
                         Test Video URL
                     </button>
                     <div id="ios-debug-info" style="display: none; background: rgba(0,0,0,0.8); color: white; padding: 10px; margin: 10px 0; border-radius: 5px; font-size: 12px; text-align: left;">
@@ -1052,14 +1052,14 @@
                 updateDebugStatus('Video playback stalled');
             });
             
-            // Show debug info and manual play button for iOS
+            // Show debug info and manual play button for iOS (hidden by default)
             if (isIOS) {
                 const debugInfo = document.getElementById('ios-debug-info');
                 const debugStatus = document.getElementById('debug-status');
                 const debugUrl = document.getElementById('debug-url');
                 
                 if (debugInfo) {
-                    debugInfo.style.display = 'block';
+                    debugInfo.style.display = 'none'; // Hidden by default
                     debugStatus.textContent = 'Loading video...';
                     debugUrl.textContent = 'URL: ' + processedVideoUrl;
                 }
@@ -1069,15 +1069,15 @@
                     if (iosPlayButton) {
                         iosPlayButton.style.display = 'block';
                     }
-                }, 3000); // Show after 3 seconds if video hasn't started
+                }, 1000); // Reduced from 3 seconds to 1 second
             } else {
-                // Show debug info for PC too
+                // Hide debug info for PC too
                 const debugInfo = document.getElementById('ios-debug-info');
                 const debugStatus = document.getElementById('debug-status');
                 const debugUrl = document.getElementById('debug-url');
                 
                 if (debugInfo) {
-                    debugInfo.style.display = 'block';
+                    debugInfo.style.display = 'none'; // Hidden by default
                     debugStatus.textContent = 'Loading video on PC...';
                     debugUrl.textContent = 'URL: ' + processedVideoUrl;
                 }
