@@ -946,13 +946,11 @@
                         <span id="debug-error"></span>
                     </div>
                     <!-- CHAT AREA -->
-                    <div id="chat" style="border:2px solid red;">
-                        <h4>Chat</h4>
-                        <div id="chat-messages">
-                          <div style="color:lime;">If you see this, the chat area is visible!</div>
-                        </div>
-                        <textarea id="chat-input" placeholder="Type a message..." rows="2"></textarea>
-                        <button onclick="sendChatMessage(event)">Sift?</button>
+                    <div id="chat" style="background: #23272b; border: 2px solid #444; border-radius: 10px; box-shadow: 0 2px 8px #0002; padding: 16px 12px 10px 12px; margin-top: 18px; margin-bottom: 8px;">
+                        <h4 style="margin-top:0; color:#e0e0e0;">Chat</h4>
+                        <div id="chat-messages"></div>
+                        <textarea id="chat-input" placeholder="Type a message..." rows="2" style="width:100%; margin-top:8px; background:#181a1b; color:#eee; border:1px solid #333; border-radius:6px; padding:8px;"></textarea>
+                        <button onclick="sendChatMessage(event)" style="margin-top:8px; background: var(--accent-color); color: white; border: none; border-radius: 6px; padding: 8px 18px; font-size: 1em; cursor: pointer; box-shadow: 0 2px 8px rgba(0,0,0,0.18);">Sift?</button>
                     </div>
                 </div>
             </div>
