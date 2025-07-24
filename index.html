@@ -628,9 +628,54 @@
             100% { transform: rotate(360deg); }
         }
         /* --- TIP: For much better video performance, use a real video CDN or streaming service (GitHub is slow for video). Try Google Drive, Dropbox, Streamable, or Firebase Storage for production. --- */
+        /* --- 1. Much More Noticeable & Smooth Animations --- */
+        .screen {
+            opacity: 0;
+            pointer-events: none;
+            transform: translateX(40px) scale(0.98);
+            transition: opacity 1.2s cubic-bezier(0.4,0,0.2,1), transform 0.8s cubic-bezier(0.4,0,0.2,1);
+        }
+        .screen:not(.hidden) {
+            opacity: 1;
+            pointer-events: auto;
+            transform: translateX(0) scale(1);
+        }
+        .screen.slide-out {
+            opacity: 0;
+            transform: translateX(-40px) scale(0.98);
+            transition: opacity 0.7s, transform 0.7s;
+        }
+        .chat-message-animate {
+            animation: chatFadeIn 1.3s cubic-bezier(0.4,0,0.2,1);
+        }
+        @keyframes chatFadeIn {
+            0% { opacity: 0; transform: translateY(60px) scale(0.92); }
+            60% { opacity: 0.7; transform: translateY(-10px) scale(1.03); }
+            100% { opacity: 1; transform: translateY(0) scale(1); }
+        }
+        .user-list-animate {
+            animation: userListFadeIn 1s cubic-bezier(0.4,0,0.2,1);
+        }
+        @keyframes userListFadeIn {
+            from { opacity: 0; transform: translateY(-20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        #mobile-video-warning {
+            display: none;
+            background: #ffb300;
+            color: #222;
+            padding: 10px 18px;
+            border-radius: 8px;
+            margin: 10px auto 18px auto;
+            max-width: 600px;
+            font-size: 1em;
+            text-align: center;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+        }
     </style>
 </head>
 <body>
+    <div id="mobile-video-warning"></div>
     <button id="view-toggle-btn" onclick="toggleDesktopView()">Desktop View</button>
 
     <div class="container">
@@ -1636,6 +1681,174 @@
         function showVideoSpinner(show) {
             const spinner = document.getElementById('video-loading-spinner');
             if (spinner) spinner.style.display = show ? 'flex' : 'none';
+        }
+        // --- Show mobile video warning if on mobile and using GitHub video ---
+        function showMobileVideoWarningIfNeeded(videoUrl) {
+            const warningDiv = document.getElementById('mobile-video-warning');
+            if (isMobileDevice() && videoUrl && videoUrl.includes('github.com')) {
+                warningDiv.style.display = 'block';
+                warningDiv.innerHTML = '⚠️ Video streaming from GitHub is slow on mobile. For best experience, use Google Drive, Dropbox, or a real video CDN.';
+            } else {
+                warningDiv.style.display = 'none';
+            }
+        }
+        // --- Animated screen transitions ---
+        let lastScreen = null;
+        function showScreen(screenId) {
+            const screens = document.querySelectorAll('.screen');
+            screens.forEach(screen => {
+                if (!screen.classList.contains('hidden')) {
+                    screen.classList.add('slide-out');
+                    setTimeout(() => {
+                        screen.classList.add('hidden');
+                        screen.classList.remove('slide-out');
+                    }, 700);
+                } else {
+                    screen.classList.remove('slide-out');
+                }
+            });
+            const target = document.getElementById(screenId);
+            target.classList.remove('hidden');
+            void target.offsetWidth;
+            target.style.opacity = 1;
+            target.style.transform = 'translateX(0) scale(1)';
+            lastScreen = screenId;
+        }
+        // --- Chat Animation Cascade (and fix chat send) ---
+        async function sendChatMessage(event) {
+            if (event && event.type === 'keypress' && event.key !== 'Enter') {
+                return;
+            }
+            if (event && event.type === 'keypress') {
+                event.preventDefault();
+            }
+            const chatInput = document.getElementById('chat-input');
+            const messageText = chatInput.value.trim();
+            if (messageText && myRoom && myName) {
+                try {
+                    const roomRef = db.collection('rooms').doc(myRoom);
+                    const newMessage = {
+                        sender: myName,
+                        text: messageText,
+                        timestamp: new Date()
+                    };
+                    await roomRef.update({
+                        messages: firestoreArrayUnion(newMessage)
+                    });
+                    chatInput.value = '';
+                    chatInput.focus();
+                } catch (error) {
+                    console.error("Error sending message:", error);
+                }
+            }
+        }
+        function updateChat(messages) {
+            const chatMessagesDiv = document.getElementById('chat-messages');
+            chatMessagesDiv.innerHTML = '';
+            if (messages) {
+                messages.sort((a, b) => {
+                    const tsA = a.timestamp && a.timestamp.toDate ? a.timestamp.toDate() : new Date(0);
+                    const tsB = b.timestamp && b.timestamp.toDate ? b.timestamp.toDate() : new Date(0);
+                    return tsA - tsB;
+                });
+                messages.forEach((msg, i) => {
+                    const msgDiv = document.createElement('div');
+                    msgDiv.classList.add('chat-message-animate');
+                    msgDiv.style.animationDelay = (i * 0.08) + 's';
+                    const senderSpan = document.createElement('span');
+                    senderSpan.classList.add('chat-sender');
+                    senderSpan.textContent = msg.sender + ': ';
+                    const textSpan = document.createElement('span');
+                    textSpan.textContent = msg.text;
+                    msgDiv.appendChild(senderSpan);
+                    msgDiv.appendChild(textSpan);
+                    chatMessagesDiv.appendChild(msgDiv);
+                });
+                chatMessagesDiv.scrollTop = chatMessagesDiv.scrollHeight;
+            }
+        }
+        // --- User list with film progress, always visible, animate on update ---
+        function updateUserList(users) {
+            const userListUl = document.getElementById('user-list');
+            userListUl.innerHTML = '';
+            if (!users) return;
+            const userNames = Object.keys(users);
+            userNames.forEach((name, idx) => {
+                const userLi = document.createElement('li');
+                userLi.classList.add('user-list-animate');
+                userLi.style.animationDelay = (idx * 0.07) + 's';
+                const userData = users[name];
+                let displayTime = '';
+                if (userData && typeof userData.currentTime === 'number') {
+                    displayTime = ` (${formatTime(userData.currentTime)})`;
+                }
+                userLi.textContent = name + displayTime;
+                userListUl.appendChild(userLi);
+            });
+            const toggleArrow = document.getElementById('toggle-arrow');
+            const userListContainer = document.getElementById('floating-user-list-container');
+            if (userNames.length === 0 && !userListContainer.classList.contains('collapsed')) {
+                userListContainer.classList.add('collapsed');
+                toggleArrow.innerHTML = '▶';
+            } else if (userNames.length > 0 && userListContainer.classList.contains('collapsed')) {
+                toggleArrow.innerHTML = '▼';
+            }
+            // Always show user list if users exist
+            if (userNames.length > 0) {
+                userListContainer.classList.remove('hidden');
+            }
+        }
+        // --- Show mobile video warning on room join ---
+        function goToRoom() {
+            document.getElementById('current-room-code').innerText = myRoom;
+            alternativeFormatAttempts = 0;
+            alternativeFormats = [];
+            const videoPlayer = document.getElementById('html5-film-player');
+            videoPlayer.setAttribute('preload', 'auto');
+            videoPlayer.setAttribute('playsinline', '');
+            videoPlayer.setAttribute('webkit-playsinline', '');
+            videoPlayer.setAttribute('x5-playsinline', '');
+            videoPlayer.setAttribute('x5-video-player-type', 'h5');
+            videoPlayer.setAttribute('x5-video-player-fullscreen', 'true');
+            videoPlayer.removeEventListener('error', videoPlayer._errorHandler);
+            videoPlayer.removeEventListener('canplay', videoPlayer._canplayHandler);
+            videoPlayer.removeEventListener('loadstart', videoPlayer._loadstartHandler);
+            videoPlayer.removeEventListener('loadedmetadata', videoPlayer._loadedmetadataHandler);
+            videoPlayer.removeEventListener('loadeddata', videoPlayer._loadeddataHandler);
+            videoPlayer.removeEventListener('canplaythrough', videoPlayer._canplaythroughHandler);
+            videoPlayer.removeEventListener('waiting', videoPlayer._waitingHandler);
+            videoPlayer.removeEventListener('stalled', videoPlayer._stalledHandler);
+            showVideoSpinner(true);
+            const processedVideoUrl = processVideoUrl(myFilm);
+            showMobileVideoWarningIfNeeded(processedVideoUrl);
+            videoPlayer.src = processedVideoUrl;
+            videoPlayer.load();
+            videoPlayer._canplayHandler = function() {
+                showVideoSpinner(false);
+                console.log('[DEBUG] Video can play, spinner hidden');
+            };
+            videoPlayer._loadeddataHandler = function() {
+                showVideoSpinner(false);
+                console.log('[DEBUG] Video data loaded, spinner hidden');
+            };
+            videoPlayer._errorHandler = function(e) {
+                showVideoSpinner(false);
+                console.error('Video error:', e);
+            };
+            videoPlayer.addEventListener('canplay', videoPlayer._canplayHandler);
+            videoPlayer.addEventListener('loadeddata', videoPlayer._loadeddataHandler);
+            videoPlayer.addEventListener('error', videoPlayer._errorHandler);
+            setTimeout(() => {
+                videoPlayer.muted = true;
+                videoPlayer.play().then(() => {
+                    setTimeout(() => { videoPlayer.muted = false; }, 30);
+                }).catch(() => {
+                    videoPlayer.muted = false;
+                    videoPlayer.play().catch(()=>{});
+                });
+            }, 30);
+            showScreen('room');
+            listenForRoomUpdates();
         }
     </script>
 </body>
