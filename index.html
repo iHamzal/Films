@@ -1013,7 +1013,15 @@
             checkUsername();
             const chatInput = document.getElementById('chat-input');
             if (chatInput) {
-                chatInput.addEventListener('keypress', sendChatMessage);
+                chatInput.addEventListener('keypress', function(event) {
+                    if (event.key === 'Enter' && !event.shiftKey) {
+                        sendChatMessage(event);
+                    }
+                });
+            }
+            const chatButton = document.querySelector('#chat button');
+            if (chatButton) {
+                chatButton.onclick = sendChatMessage;
             }
 
             // ADD BACK: Video player event listeners for time updates (for user list display only)
@@ -1758,6 +1766,17 @@
             } else {
                 // All alternatives tried, show final error
                 const detectedFormat = detectVideoFormat(originalUrl);
+            }
+        }
+
+        function toggleUserList() {
+            const userListContainer = document.getElementById('floating-user-list-container');
+            const toggleArrow = document.getElementById('toggle-arrow');
+            userListContainer.classList.toggle('collapsed');
+            if (userListContainer.classList.contains('collapsed')) {
+                toggleArrow.innerHTML = '▶';
+            } else {
+                toggleArrow.innerHTML = '▼';
             }
         }
     </script>
