@@ -1814,10 +1814,9 @@
                     const tsB = b.timestamp && b.timestamp.toDate ? b.timestamp.toDate() : new Date(0);
                     return tsA - tsB;
                 });
-                messages.forEach((msg, i) => {
+                messages.forEach((msg) => {
                     const msgDiv = document.createElement('div');
-                    msgDiv.classList.add('chat-message-animate');
-                    msgDiv.style.animationDelay = (i * 0.08) + 's';
+                    // No animation class
                     const senderSpan = document.createElement('span');
                     senderSpan.classList.add('chat-sender');
                     senderSpan.textContent = msg.sender + ': ';
