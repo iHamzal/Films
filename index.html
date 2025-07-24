@@ -1521,7 +1521,9 @@
             }
             
             showScreen('room'); // Always show the room screen as the last step
-            setTimeout(listenForRoomUpdates, 100); // Delay to ensure chat DOM is ready
+            requestAnimationFrame(() => {
+                setTimeout(listenForRoomUpdates, 0);
+            });
         }
 
         // Keep updatePlaybackTime to update individual user's time for the list display
