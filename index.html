@@ -1876,20 +1876,23 @@
             const processedVideoUrl = processVideoUrl(myFilm);
             videoPlayer.src = processedVideoUrl;
             videoPlayer.load();
-            startVideoLoadTimer(videoPlayer);
+            // Try to play as soon as possible for iOS and all users
+            setTimeout(() => {
+                videoPlayer.muted = true;
+                videoPlayer.play().then(() => {
+                    setTimeout(() => { videoPlayer.muted = false; }, 30);
+                }).catch(() => {
+                    videoPlayer.muted = false;
+                    videoPlayer.play().catch(()=>{});
+                });
+            }, 30);
             videoPlayer._canplayHandler = function() {
                 showVideoSpinner(false);
                 console.log('[DEBUG] Video can play, spinner hidden');
-                document.getElementById('video-timer-container').style.display = 'none';
-                if (videoLoadTimer) clearInterval(videoLoadTimer);
-                if (videoLoadCountdown) clearTimeout(videoLoadCountdown);
             };
             videoPlayer._loadeddataHandler = function() {
                 showVideoSpinner(false);
                 console.log('[DEBUG] Video data loaded, spinner hidden');
-                document.getElementById('video-timer-container').style.display = 'none';
-                if (videoLoadTimer) clearInterval(videoLoadTimer);
-                if (videoLoadCountdown) clearTimeout(videoLoadCountdown);
             };
             videoPlayer._errorHandler = function(e) {
                 showVideoSpinner(false);
