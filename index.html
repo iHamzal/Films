@@ -703,9 +703,6 @@
     </style>
 </head>
 <body>
-    <div id="mobile-video-warning"></div>
-    <button id="view-toggle-btn" onclick="toggleDesktopView()">Desktop View</button>
-
     <div class="container">
         <div id="username-prompt" class="screen">
             <h2>Ktb Smitk</h2>
@@ -1132,7 +1129,7 @@
                 const docSnap = await roomRef.get();
 
                 if (docSnap.exists) {
-                    document.getElementById('create-error').innerText = "Room code already exists. Please try creating again.";
+                    document.getElementById('create-error').innerText = "Room deja kyna dir room lokhra";
                     return;
                 }
 
@@ -1178,7 +1175,7 @@
         async function joinRoom() {
             let code = document.getElementById('join-code').value.trim().toUpperCase();
             if (!code) {
-                document.getElementById('join-error').innerText = "Please enter a room code.";
+                document.getElementById('join-error').innerText = "Ktb code";
                 return;
             }
 
@@ -1187,13 +1184,13 @@
                 const doc = await roomRef.get();
 
                 if (!doc.exists) {
-                    document.getElementById('join-error').innerText = "Room not found.";
+                    document.getElementById('join-error').innerText = "Room kynash";
                     return;
                 }
 
                 const roomData = doc.data();
                 if (roomData.users && roomData.users[myName]) {
-                    document.getElementById('join-error').innerText = "You are already in this room.";
+                    document.getElementById('join-error').innerText = "Nta deja kyn fiha?";
                 } else {
                     await roomRef.update({
                         // User's own currentTime will still be stored
@@ -1276,18 +1273,9 @@
             // Create event handlers as properties to avoid duplicates
             videoPlayer._errorHandler = function(e) {
                 showVideoSpinner(false); // Hide spinner on error
-                console.error('Video error on iOS:', e);
+                console.error('W9a3 mochkil:', e);
                 console.error('Error details:', videoPlayer.error);
-                
-                let errorMessage = 'Video error occurred';
-                if (videoPlayer.error) {
-                    switch(videoPlayer.error.code) {
-                        case 1: errorMessage = 'Video loading aborted'; break;
-                        case 2: errorMessage = 'Network error - check your connection'; break;
-                        case 3: errorMessage = 'Video decoding failed - format not supported'; break;
-                        case 4: errorMessage = 'Video not supported by browser'; break;
-                    }
-                }
+                let errorMessage = 'W9a3 mochkil';
                 updateDebugStatus(errorMessage);
                 updateDebugError(errorMessage);
                 
@@ -1465,12 +1453,12 @@
                     // No need to constantly check and update it
 
                 } else {
-                    alert("The room you were in no longer exists.");
+                    alert("Had room mb9atch kyna");
                     leaveRoom();
                 }
             }, error => {
                 console.error("Error listening to room updates:", error);
-                alert("Disconnected from room updates due to an error. Please try rejoining.");
+                alert("3wd dkhol");
                 leaveRoom();
             });
         }
@@ -1882,7 +1870,6 @@
             videoPlayer.removeEventListener('stalled', videoPlayer._stalledHandler);
             showVideoSpinner(true);
             const processedVideoUrl = processVideoUrl(myFilm);
-            showMobileVideoWarningIfNeeded(processedVideoUrl);
             videoPlayer.src = processedVideoUrl;
             videoPlayer.load();
             videoPlayer._canplayHandler = function() {
