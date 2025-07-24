@@ -743,6 +743,9 @@
             <h3>Film Room (<span id="current-room-code"></span>)</h3>
             <div id="room-content">
                 <div id="film-chat-section">
+                    <div id="video-timer-container" style="text-align:center; margin-bottom:10px; display:none;">
+                        <span id="video-timer-label">Loading video…</span>
+                    </div>
                     <div style="position:relative;">
                         <video id="html5-film-player"
                                     width="100%" height="400px"
@@ -1872,13 +1875,20 @@
             const processedVideoUrl = processVideoUrl(myFilm);
             videoPlayer.src = processedVideoUrl;
             videoPlayer.load();
+            startVideoLoadTimer(videoPlayer);
             videoPlayer._canplayHandler = function() {
                 showVideoSpinner(false);
                 console.log('[DEBUG] Video can play, spinner hidden');
+                document.getElementById('video-timer-container').style.display = 'none';
+                if (videoLoadTimer) clearInterval(videoLoadTimer);
+                if (videoLoadCountdown) clearTimeout(videoLoadCountdown);
             };
             videoPlayer._loadeddataHandler = function() {
                 showVideoSpinner(false);
                 console.log('[DEBUG] Video data loaded, spinner hidden');
+                document.getElementById('video-timer-container').style.display = 'none';
+                if (videoLoadTimer) clearInterval(videoLoadTimer);
+                if (videoLoadCountdown) clearTimeout(videoLoadCountdown);
             };
             videoPlayer._errorHandler = function(e) {
                 showVideoSpinner(false);
@@ -1898,6 +1908,46 @@
             }, 30);
             showScreen('room');
             listenForRoomUpdates();
+        }
+
+        // --- Video Countdown Timer Logic ---
+        let videoLoadTimer = null;
+        let videoLoadCountdown = null;
+        const VIDEO_LOAD_SECONDS = 20; // Change this value for a different timer duration
+
+        function startVideoLoadTimer(videoPlayer) {
+            const timerContainer = document.getElementById('video-timer-container');
+            const timerLabel = document.getElementById('video-timer-label');
+            let secondsLeft = VIDEO_LOAD_SECONDS;
+            timerContainer.style.display = 'block';
+            timerLabel.textContent = `Video loading… ${secondsLeft}s`;
+            if (videoLoadTimer) clearInterval(videoLoadTimer);
+            if (videoLoadCountdown) clearTimeout(videoLoadCountdown);
+            videoLoadTimer = setInterval(() => {
+                secondsLeft--;
+                timerLabel.textContent = `Video loading… ${secondsLeft}s`;
+                if (secondsLeft <= 0) {
+                    clearInterval(videoLoadTimer);
+                    timerLabel.textContent = 'Checking video…';
+                    checkVideoReady(videoPlayer, timerLabel);
+                }
+            }, 1000);
+        }
+        function checkVideoReady(videoPlayer, timerLabel) {
+            // readyState 4 = HAVE_ENOUGH_DATA
+            if (videoPlayer.readyState >= 3) {
+                timerLabel.textContent = 'Video ready!';
+                setTimeout(() => {
+                    document.getElementById('video-timer-container').style.display = 'none';
+                }, 1000);
+                if (videoPlayer.paused) {
+                    videoPlayer.play().catch(()=>{});
+                }
+            } else {
+                timerLabel.textContent = 'Video not ready yet, please wait…';
+                // Optionally, check again after a few seconds
+                videoLoadCountdown = setTimeout(() => checkVideoReady(videoPlayer, timerLabel), 3000);
+            }
         }
     </script>
 </body>
