@@ -1661,6 +1661,10 @@
         // Update user list to show time and format it
         function updateUserList(users) {
             const userListUl = document.getElementById('user-list');
+            if (!userListUl) {
+                console.warn('[DEBUG] #user-list not found in DOM');
+                return;
+            }
             userListUl.innerHTML = '';
             console.log('[DEBUG] updateUserList called with:', users);
             if (!users || Object.keys(users).length === 0) {
@@ -1789,6 +1793,10 @@
         // Add this at the top level of the script
         function updateChat(messages) {
             const chatMessagesDiv = document.getElementById('chat-messages');
+            if (!chatMessagesDiv) {
+                console.warn('[DEBUG] #chat-messages not found in DOM');
+                return;
+            }
             chatMessagesDiv.innerHTML = '';
             console.log('[DEBUG] updateChat called with:', messages);
             if (messages && messages.length > 0) {
