@@ -1708,8 +1708,30 @@
         }
         // --- Animated screen transitions ---
         let lastScreen = null;
+        let firstScreenShown = false;
         function showScreen(screenId) {
             const screens = document.querySelectorAll('.screen');
+            if (!firstScreenShown) {
+                // First screen: show instantly, no animation
+                screens.forEach(screen => {
+                    screen.classList.add('hidden');
+                });
+                const target = document.getElementById(screenId);
+                target.classList.remove('hidden');
+                target.classList.add('no-animate');
+                void target.offsetWidth;
+                target.style.opacity = 1;
+                target.style.transform = 'translateX(0) scale(1)';
+                // Remove .no-animate from all screens after first show
+                setTimeout(() => {
+                    document.querySelectorAll('.screen').forEach(screen => {
+                        screen.classList.remove('no-animate');
+                    });
+                }, 50);
+                firstScreenShown = true;
+                lastScreen = screenId;
+                return;
+            }
             screens.forEach(screen => {
                 if (!screen.classList.contains('hidden')) {
                     screen.classList.add('slide-out');
