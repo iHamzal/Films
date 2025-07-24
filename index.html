@@ -1666,13 +1666,15 @@
             if (!users || Object.keys(users).length === 0) {
                 // Show a message if user list is empty
                 const li = document.createElement('li');
-                li.style.color = '#888';
+                li.style.color = '#e53935';
                 li.style.textAlign = 'center';
-                li.textContent = 'No users in room.';
+                li.textContent = 'No users in room. (DEBUG: users object is empty or undefined)';
                 userListUl.appendChild(li);
+                console.warn('[DEBUG] No users in room. users object:', users);
                 return;
             }
             const userNames = Object.keys(users);
+            console.log('[DEBUG] Usernames in room:', userNames);
             userNames.forEach(name => {
                 const userLi = document.createElement('li');
                 const userData = users[name];
@@ -1781,6 +1783,35 @@
                 toggleArrow.innerHTML = '▶';
             } else {
                 toggleArrow.innerHTML = '▼';
+            }
+        }
+
+        // Add this at the top level of the script
+        function updateChat(messages) {
+            const chatMessagesDiv = document.getElementById('chat-messages');
+            chatMessagesDiv.innerHTML = '';
+            console.log('[DEBUG] updateChat called with:', messages);
+            if (messages && messages.length > 0) {
+                messages.sort((a, b) => {
+                    const tsA = a.timestamp && a.timestamp.toDate ? a.timestamp.toDate() : new Date(0);
+                    const tsB = b.timestamp && b.timestamp.toDate ? b.timestamp.toDate() : new Date(0);
+                    return tsA - tsB;
+                });
+                messages.forEach(msg => {
+                    const msgDiv = document.createElement('div');
+                    const senderSpan = document.createElement('span');
+                    senderSpan.classList.add('chat-sender');
+                    senderSpan.textContent = msg.sender + ': ';
+                    const textSpan = document.createElement('span');
+                    textSpan.textContent = msg.text;
+                    msgDiv.appendChild(senderSpan);
+                    msgDiv.appendChild(textSpan);
+                    chatMessagesDiv.appendChild(msgDiv);
+                });
+                chatMessagesDiv.scrollTop = chatMessagesDiv.scrollHeight;
+            } else {
+                // Show a message if chat is empty
+                chatMessagesDiv.innerHTML = '<div style="color:#888;text-align:center;">No chat messages yet.</div>';
             }
         }
     </script>
