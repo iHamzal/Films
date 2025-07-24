@@ -1914,7 +1914,7 @@
         // --- Video Countdown Timer Logic ---
         let videoLoadTimer = null;
         let videoLoadCountdown = null;
-        const VIDEO_LOAD_SECONDS = 60; // Changed to 60 seconds
+        const VIDEO_LOAD_SECONDS = 100; // Changed to 100 seconds
 
         function startVideoLoadTimer(videoPlayer) {
             const timerContainer = document.getElementById('video-timer-container');
@@ -1943,6 +1943,8 @@
                 if (secondsLeft <= 0) {
                     clearInterval(videoLoadTimer);
                     timerLabel.textContent = 'Checking video…';
+                    // Do NOT auto-start the video or hide the Start button
+                    // Optionally, you can keep checking and update the label if you want
                     checkVideoReady(videoPlayer, timerLabel);
                 }
             }, 1000);
@@ -1950,13 +1952,8 @@
         function checkVideoReady(videoPlayer, timerLabel) {
             // readyState 4 = HAVE_ENOUGH_DATA
             if (videoPlayer.readyState >= 3) {
-                timerLabel.textContent = 'Video ready!';
-                setTimeout(() => {
-                    document.getElementById('video-timer-container').style.display = 'none';
-                }, 1000);
-                if (videoPlayer.paused) {
-                    videoPlayer.play().catch(()=>{});
-                }
+                timerLabel.textContent = 'Video ready! Click Start to play.';
+                // Do NOT auto-play or hide the Start button
             } else {
                 timerLabel.textContent = 'Video not ready yet, please wait…';
                 // Optionally, check again after a few seconds
