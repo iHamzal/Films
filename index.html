@@ -672,6 +672,9 @@
             text-align: center;
             box-shadow: 0 2px 8px rgba(0,0,0,0.08);
         }
+        .screen.no-animate {
+            transition: none !important;
+        }
     </style>
 </head>
 <body>
@@ -859,6 +862,17 @@
             if (isMobileDevice() || isIOSDevice()) {
                 document.getElementById('view-toggle-btn').style.display = 'block';
             }
+            // --- Prevent initial screen animation glitch ---
+            // Add .no-animate to all screens initially
+            document.querySelectorAll('.screen').forEach(screen => {
+                screen.classList.add('no-animate');
+            });
+            // After first screen is shown, remove .no-animate from all screens
+            setTimeout(() => {
+                document.querySelectorAll('.screen').forEach(screen => {
+                    screen.classList.remove('no-animate');
+                });
+            }, 100); // 100ms is enough for initial render
         });
 
 
