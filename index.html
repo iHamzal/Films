@@ -1801,6 +1801,10 @@
             }
             chatMessagesDiv.innerHTML = '';
             console.log('[DEBUG] updateChat called with:', messages);
+            // TEMP: Add a test message if messages is empty or undefined
+            if (!messages || messages.length === 0) {
+                messages = [{sender: 'TestBot', text: 'This is a test message!', timestamp: new Date()}];
+            }
             if (messages && messages.length > 0) {
                 messages.sort((a, b) => {
                     const tsA = a.timestamp && a.timestamp.toDate ? a.timestamp.toDate() : new Date(0);
