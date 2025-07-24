@@ -689,6 +689,17 @@
             opacity: 0;
             transition: opacity 0.7s;
         }
+        /* --- Basic Fade Screen Transition --- */
+        .screen {
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.5s cubic-bezier(0.4,0,0.2,1);
+        }
+        .screen.visible {
+            opacity: 1;
+            pointer-events: auto;
+        }
+        /* ... keep chat/user list animations ... */
     </style>
 </head>
 <body>
@@ -1727,14 +1738,14 @@
             const screens = document.querySelectorAll('.screen');
             if (!firstScreenShown) {
                 screens.forEach(screen => {
+                    screen.classList.remove('visible');
                     screen.classList.add('hidden');
                 });
                 const target = document.getElementById(screenId);
                 target.classList.remove('hidden');
-                target.classList.add('no-animate');
+                target.classList.add('no-animate', 'visible');
                 void target.offsetWidth;
                 target.style.opacity = 1;
-                // Remove .no-animate from all screens after first show
                 setTimeout(() => {
                     document.querySelectorAll('.screen').forEach(screen => {
                         screen.classList.remove('no-animate');
@@ -1744,22 +1755,27 @@
                 lastScreen = screenId;
                 return;
             }
-            screens.forEach(screen => {
-                if (!screen.classList.contains('hidden')) {
-                    screen.classList.add('fade-out');
-                    setTimeout(() => {
-                        screen.classList.add('hidden');
-                        screen.classList.remove('fade-out');
-                    }, 700);
-                } else {
-                    screen.classList.remove('fade-out');
-                }
-            });
-            const target = document.getElementById(screenId);
-            target.classList.remove('hidden');
-            void target.offsetWidth;
-            target.style.opacity = 1;
-            lastScreen = screenId;
+            // Fade out the currently visible screen
+            const current = Array.from(screens).find(screen => screen.classList.contains('visible') && !screen.classList.contains('hidden'));
+            if (current) {
+                current.classList.remove('visible');
+                setTimeout(() => {
+                    current.classList.add('hidden');
+                    // Fade in the new screen
+                    const target = document.getElementById(screenId);
+                    target.classList.remove('hidden');
+                    void target.offsetWidth;
+                    target.classList.add('visible');
+                    lastScreen = screenId;
+                }, 500); // match transition duration
+            } else {
+                // If no current, just show the new one
+                const target = document.getElementById(screenId);
+                target.classList.remove('hidden');
+                void target.offsetWidth;
+                target.classList.add('visible');
+                lastScreen = screenId;
+            }
         }
         // --- Chat Animation Cascade (and fix chat send) ---
         async function sendChatMessage(event) {
