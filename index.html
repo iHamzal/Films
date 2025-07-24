@@ -1662,12 +1662,16 @@
         function updateUserList(users) {
             const userListUl = document.getElementById('user-list');
             userListUl.innerHTML = '';
-
-            if (!users) {
-                console.warn("updateUserList called with no users data.");
+            console.log('[DEBUG] updateUserList called with:', users);
+            if (!users || Object.keys(users).length === 0) {
+                // Show a message if user list is empty
+                const li = document.createElement('li');
+                li.style.color = '#888';
+                li.style.textAlign = 'center';
+                li.textContent = 'No users in room.';
+                userListUl.appendChild(li);
                 return;
             }
-
             const userNames = Object.keys(users);
             userNames.forEach(name => {
                 const userLi = document.createElement('li');
