@@ -1363,6 +1363,12 @@
             }
         }
 
+        // Add this before goToRoom
+        function showVideoSpinner(show) {
+            const spinner = document.getElementById('video-loading-spinner');
+            if (spinner) spinner.style.display = show ? 'flex' : 'none';
+        }
+
         // --- MODIFIED: Go to Room to load HTML5 video player ---
         function goToRoom() {
             document.getElementById('current-room-code').innerText = myRoom;
