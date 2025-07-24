@@ -526,7 +526,7 @@
         .screen {
             opacity: 0;
             pointer-events: none;
-            transition: opacity 1s cubic-bezier(0.4,0,0.2,1); /* Slower fade */
+            transition: opacity 1.7s cubic-bezier(0.4,0,0.2,1); /* Slower fade */
         }
         .screen:not(.hidden) {
             opacity: 1;
@@ -534,11 +534,16 @@
         }
         /* --- 2. Animated Chat Message Entry (more obvious) --- */
         .chat-message-animate {
-            animation: chatFadeIn 0.9s cubic-bezier(0.4,0,0.2,1); /* Slower, more movement */
+            animation: chatFadeIn 1.3s cubic-bezier(0.4,0,0.2,1); /* Slower, more movement */
         }
         @keyframes chatFadeIn {
-            from { opacity: 0; transform: translateY(40px) scale(0.95); }
-            to { opacity: 1; transform: translateY(0) scale(1); }
+            0% { opacity: 0; transform: translateY(60px) scale(0.92); }
+            60% { opacity: 0.7; transform: translateY(-10px) scale(1.03); }
+            100% { opacity: 1; transform: translateY(0) scale(1); }
+        }
+        /* Optional: Chat cascade effect */
+        .chat-message-animate {
+            will-change: opacity, transform;
         }
         /* --- 3. Button Ripple Effect --- */
         .ripple {
@@ -599,6 +604,30 @@
         @media (max-width: 768px) {
             #view-toggle-btn { display: block; }
         }
+        /* --- Video Loading Spinner Overlay --- */
+        #video-loading-spinner {
+            position: absolute;
+            left: 0; top: 0; right: 0; bottom: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: rgba(0,0,0,0.55);
+            z-index: 10;
+            border-radius: 10px;
+        }
+        .spinner {
+            border: 6px solid #f3f3f3;
+            border-top: 6px solid var(--accent-color);
+            border-radius: 50%;
+            width: 48px;
+            height: 48px;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        /* --- TIP: For much better video performance, use a real video CDN or streaming service (GitHub is slow for video). Try Google Drive, Dropbox, Streamable, or Firebase Storage for production. --- */
     </style>
 </head>
 <body>
@@ -644,19 +673,24 @@
             <h3>Film Room (<span id="current-room-code"></span>)</h3>
             <div id="room-content">
                 <div id="film-chat-section">
-                    <video id="html5-film-player"
-                                width="100%" height="400px"
-                                controls
-                                preload="auto"
-                                playsinline
-                                webkit-playsinline
-                                x5-playsinline
-                                x5-video-player-type="h5"
-                                x5-video-player-fullscreen="true"
-                                style="display: block; margin: 0 auto 30px auto; border-radius: 10px; box-shadow: 0 8px 25px var(--shadow-color-dark); border: 2px solid var(--border-color);"
-                    >
-                        Your browser does not support the video tag.
-                    </video>
+                    <div style="position:relative;">
+                        <video id="html5-film-player"
+                                    width="100%" height="400px"
+                                    controls
+                                    preload="auto"
+                                    playsinline
+                                    webkit-playsinline
+                                    x5-playsinline
+                                    x5-video-player-type="h5"
+                                    x5-video-player-fullscreen="true"
+                                    style="display: block; margin: 0 auto 30px auto; border-radius: 10px; box-shadow: 0 8px 25px var(--shadow-color-dark); border: 2px solid var(--border-color);"
+                        >
+                            Your browser does not support the video tag.
+                        </video>
+                        <div id="video-loading-spinner">
+                            <div class="spinner"></div>
+                        </div>
+                    </div>
                     <button id="ios-play-button" onclick="forcePlayOnIOS()" style="display: none; margin: 10px auto; padding: 10px 20px; background: var(--accent-color); color: white; border: none; border-radius: 5px; cursor: pointer;">
                         Tap to Play Video (iOS)
                     </button>
@@ -1114,7 +1148,15 @@
             // CHANGED: Target the HTML5 video player with iOS-specific handling
             const videoPlayer = document.getElementById('html5-film-player');
             
-            // OPTIMIZATION: Remove all existing event listeners to prevent duplicates
+            // Always set preload and playsinline for best performance
+            videoPlayer.setAttribute('preload', 'auto');
+            videoPlayer.setAttribute('playsinline', '');
+            videoPlayer.setAttribute('webkit-playsinline', '');
+            videoPlayer.setAttribute('x5-playsinline', '');
+            videoPlayer.setAttribute('x5-video-player-type', 'h5');
+            videoPlayer.setAttribute('x5-video-player-fullscreen', 'true');
+            
+            // Remove all existing event listeners to prevent duplicates
             videoPlayer.removeEventListener('error', videoPlayer._errorHandler);
             videoPlayer.removeEventListener('canplay', videoPlayer._canplayHandler);
             videoPlayer.removeEventListener('loadstart', videoPlayer._loadstartHandler);
@@ -1127,16 +1169,16 @@
             // Process the video URL for iOS compatibility (cached for performance)
             const processedVideoUrl = processVideoUrl(myFilm);
             
-            // OPTIMIZATION: Set preload to auto for fastest loading
-            videoPlayer.preload = 'auto';
+            // Show spinner before loading
+            showVideoSpinner(true);
             
-            // OPTIMIZATION: Set video source immediately
+            // Set video source immediately
             videoPlayer.src = processedVideoUrl;
             
-            // OPTIMIZATION: Start loading immediately
+            // Start loading immediately
             videoPlayer.load();
             
-            // OPTIMIZATION: Try to play as soon as possible
+            // Try to play as soon as possible
             setTimeout(() => {
                 videoPlayer.muted = true;
                 videoPlayer.play().then(() => {
@@ -1145,10 +1187,11 @@
                     videoPlayer.muted = false;
                     videoPlayer.play().catch(()=>{});
                 });
-            }, 50); // Try to play after 50ms
+            }, 30); // Try to play after 30ms
             
-            // OPTIMIZATION: Create event handlers as properties to avoid duplicates
+            // Create event handlers as properties to avoid duplicates
             videoPlayer._errorHandler = function(e) {
+                showVideoSpinner(false); // Hide spinner on error
                 console.error('Video error on iOS:', e);
                 console.error('Error details:', videoPlayer.error);
                 
@@ -1169,6 +1212,7 @@
             };
             
             videoPlayer._canplayHandler = function() {
+                showVideoSpinner(false); // Hide spinner on canplay
                 console.log('Video can play on iOS');
                 updateDebugStatus('Video can play on iOS');
             };
@@ -1383,36 +1427,6 @@
             }
         }
 
-        function updateChat(messages) {
-            const chatMessagesDiv = document.getElementById('chat-messages');
-            chatMessagesDiv.innerHTML = '';
-            if (messages) {
-                // Ensure messages are sorted if they have a timestamp property
-                messages.sort((a, b) => {
-                    const tsA = a.timestamp && a.timestamp.toDate ? a.timestamp.toDate() : new Date(0);
-                    const tsB = b.timestamp && b.timestamp.toDate ? b.timestamp.toDate() : new Date(0);
-                    return tsA - tsB;
-                });
-
-                messages.forEach(msg => {
-                    const msgDiv = document.createElement('div');
-                    msgDiv.classList.add('chat-message-animate');
-                    console.log('[DEBUG] Chat message animation triggered for:', msg.text);
-                    const senderSpan = document.createElement('span');
-                    senderSpan.classList.add('chat-sender');
-                    senderSpan.textContent = msg.sender + ': ';
-
-                    const textSpan = document.createElement('span');
-                    textSpan.textContent = msg.text;
-
-                    msgDiv.appendChild(senderSpan);
-                    msgDiv.appendChild(textSpan);
-                    chatMessagesDiv.appendChild(msgDiv);
-                });
-                chatMessagesDiv.scrollTop = chatMessagesDiv.scrollHeight;
-            }
-        }
-
         // Update user list to show time and format it
         function updateUserList(users) {
             const userListUl = document.getElementById('user-list');
@@ -1616,6 +1630,12 @@
             } else {
                 toggleArrow.innerHTML = '▼';
             }
+        }
+
+        // --- Video Loading Spinner Logic & Video Optimization ---
+        function showVideoSpinner(show) {
+            const spinner = document.getElementById('video-loading-spinner');
+            if (spinner) spinner.style.display = show ? 'flex' : 'none';
         }
     </script>
 </body>
