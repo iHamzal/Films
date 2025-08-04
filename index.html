@@ -7,179 +7,342 @@
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
     <style>
         :root {
-            /* Define a richer, darker color palette */
-            --darkest-bg: #0a0a0a; /* Almost black */
-            --dark-bg: #1c1c1c;    /* Deep charcoal */
-            --medium-bg: #252525;    /* Slightly lighter charcoal for container */
-            --light-bg: #333333;    /* For elements like chat background */
-            --text-color: #f0f0f0; /* Soft white */
-            --accent-color: #00BFFF; /* Deep Sky Blue - New Accent Color */
-            --button-hover-color: #009ACD; /* Darker blue for hover */
-            --border-color: #444444; /* Darker border */
-            --shadow-color-dark: rgba(0, 0, 0, 0.7); /* More pronounced shadows */
-            --shadow-color-light: rgba(0, 0, 0, 0.4);
-            --chat-mention-color: #46D3FF; /* Lighter blue for mentions */
-            --error-color: #e53935; /* Red for errors */
+            /* Improved color palette for modern look */
+            --darkest-bg: #0a0a0a;
+            --dark-bg: #181a1b;
+            --medium-bg: #23272b;
+            --light-bg: #2c3136;
+            --text-color: #f0f0f0;
+            --accent-color: #00BFFF;
+            --button-hover-color: #009ACD;
+            --border-color: #00BFFF;
+            --shadow-color-dark: rgba(0,0,0,0.7);
+            --shadow-color-light: rgba(0,0,0,0.4);
+            --chat-mention-color: #46D3FF;
+            --error-color: #e53935;
         }
-
         body {
             font-family: 'Poppins', sans-serif;
             display: flex;
             justify-content: center;
             align-items: center;
             min-height: 100vh;
-            background-color: var(--darkest-bg);
+            background: linear-gradient(135deg, #0a0a0a 0%, #23272b 100%);
             color: var(--text-color);
             margin: 0;
             line-height: 1.6;
-            overflow-x: hidden; /* Prevent horizontal scroll on mobile */
-            position: relative; /* Needed for pseudo-element background */
-            z-index: 1; /* Ensure body content is above pseudo-element */
+            overflow-x: hidden;
+            position: relative;
+            z-index: 1;
         }
-
-        /* Animated Background */
+        /* Subtle animated background for depth */
         body::before {
             content: '';
             position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: radial-gradient(circle at 10% 20%, rgba(0, 100, 150, 0.1) 0%, rgba(0, 0, 0, 0) 40%),
-                                radial-gradient(circle at 90% 80%, rgba(0, 150, 200, 0.15) 0%, rgba(0, 0, 0, 0) 40%),
-                                radial-gradient(circle at 40% 60%, rgba(0, 80, 130, 0.08) 0%, rgba(0, 0, 0, 0) 40%);
-            background-size: 200% 200%; /* Larger to allow movement */
-            animation: subtleBackgroundPan 40s linear infinite alternate; /* Slow, continuous pan */
-            z-index: -1; /* Place behind content */
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: radial-gradient(circle at 10% 20%, rgba(0, 100, 150, 0.12) 0%, rgba(0, 0, 0, 0) 40%),
+                        radial-gradient(circle at 90% 80%, rgba(0, 150, 200, 0.13) 0%, rgba(0, 0, 0, 0) 40%),
+                        radial-gradient(circle at 40% 60%, rgba(0, 80, 130, 0.08) 0%, rgba(0, 0, 0, 0) 40%);
+            background-size: 200% 200%;
+            animation: subtleBackgroundPan 40s linear infinite alternate;
+            z-index: -1;
         }
-
         @keyframes subtleBackgroundPan {
             0% { background-position: 0% 0%; }
             100% { background-position: 100% 100%; }
         }
-
         .container {
             text-align: center;
             background: var(--medium-bg);
-            padding: 35px;
-            border-radius: 15px;
-            box-shadow: 0 10px 30px var(--shadow-color-dark);
-            width: 90%;
-            max-width: 950px; /* Slightly wider container */
+            padding: 40px 20px 32px 20px;
+            border-radius: 22px;
+            box-shadow: 0 12px 40px #00BFFF, 0 2px 8px #000;
+            width: 96%;
+            max-width: 950px;
             position: relative;
-            border: 1px solid var(--border-color); /* Subtle border */
-            box-sizing: border-box; /* Include padding/border in width */
-            z-index: 2; /* Ensure container is above background */
-            transition: transform 0.3s ease-out, box-shadow 0.3s ease-out; /* Animation for screen transitions */
+            border: 4px solid var(--border-color);
+            box-sizing: border-box;
+            z-index: 2;
         }
-        .hidden {
-            display: none !important;
-        }
+        .hidden { display: none !important; }
         h2, h3, h4 {
             color: var(--accent-color);
             margin-top: 0;
-            font-weight: 700; /* Bolder headings */
-            letter-spacing: 1px; /* More prominent letter spacing */
-            text-shadow: 0 0 5px rgba(0, 191, 255, 0.3); /* Subtle glow on titles */
+            font-weight: 700;
+            letter-spacing: 1px;
+            text-shadow: 0 0 5px rgba(0, 191, 255, 0.2);
         }
-        h2 {
-            font-size: 2.2em;
-            margin-bottom: 25px;
-        }
-        h3 {
-            font-size: 1.8em;
-            margin-bottom: 20px;
-        }
-        p {
-            font-size: 1em;
-            color: var(--text-color);
-            margin-bottom: 15px;
-        }
-        input {
+        h2 { font-size: 2.3em; margin-bottom: 22px; }
+        h3 { font-size: 1.5em; margin-bottom: 18px; }
+        p { font-size: 1.08em; color: var(--text-color); margin-bottom: 15px; }
+        input, textarea {
             margin: 18px 0;
-            padding: 14px;
-            font-size: 1.05em;
-            width: calc(100% - 28px); /* Adjust for padding */
-            max-width: 380px; /* Wider inputs */
+            padding: 18px 16px;
+            font-size: 1.18em;
+            width: 100%;
+            max-width: 420px;
             box-sizing: border-box;
             background-color: var(--light-bg);
-            border: 1px solid var(--border-color);
-            border-radius: 8px;
+            border: 2px solid var(--border-color);
+            border-radius: 12px;
             color: var(--text-color);
-            transition: border-color 0.3s ease, box-shadow 0.3s ease, transform 0.2s ease; /* Added transform */
+            transition: border-color 0.3s, box-shadow 0.3s, transform 0.2s;
         }
-        input::placeholder {
-            color: rgba(240, 240, 240, 0.5); /* Lighter placeholder */
+        input::placeholder, textarea::placeholder {
+            color: rgba(240,240,240,0.5);
         }
-        input:focus {
+        input:focus, textarea:focus {
             border-color: var(--accent-color);
-            box-shadow: 0 0 12px rgba(0, 191, 255, 0.5); /* Stronger glow on focus */
+            box-shadow: 0 0 16px #00BFFF;
             outline: none;
-            background-color: var(--light-bg); /* Ensure background stays consistent */
-            transform: translateY(-2px); /* Slight lift on focus */
+            background-color: var(--light-bg);
+            transform: translateY(-2px);
         }
+        /* --- Improved Buttons --- */
         button {
             margin: 18px 0;
-            padding: 14px 30px;
-            font-size: 1.1em;
-            background: linear-gradient(145deg, var(--accent-color), var(--button-hover-color)); /* Gradient background */
-            color: var(--dark-bg); /* Dark text on blue button */
+            padding: 20px 0;
+            font-size: 1.25em;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.18);
             border: none;
-            cursor: pointer;
-            width: calc(100% - 28px);
-            max-width: 380px;
-            border-radius: 8px;
-            font-weight: 700; /* Bolder text */
-            text-transform: uppercase; /* Uppercase text */
-            letter-spacing: 0.8px;
-            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.4); /* Button shadow */
-            transition: background 0.3s ease, transform 0.2s ease, box-shadow 0.3s ease;
-        }
-        button:hover {
-            background: linear-gradient(145deg, var(--button-hover-color), var(--accent-color));
-            transform: translateY(-3px);
-            box-shadow: 0 6px 15px rgba(0, 0, 0, 0.6);
-        }
-        button:active {
-            transform: translateY(0);
-            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.4);
-        }
-        button {
             background: linear-gradient(145deg, var(--accent-color), var(--button-hover-color));
             color: var(--dark-bg);
-        }
-        button[onclick*="main-menu"]:hover {
-            background: linear-gradient(145deg, #a12a2a, #d32f2f);
-            transform: translateY(-3px);
-        }
-        #username-error, #create-error, #join-error {
-            color: var(--error-color);
-            font-weight: 600;
-            margin-top: -10px; /* Adjust spacing */
-            margin-bottom: 10px;
-            font-size: 0.9em;
-        }
-
-        #room {
-            position: relative;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
-        #room-content {
-            display: flex;
-            flex-direction: row;
-            gap: 40px; /* Increased gap */
-            text-align: left;
+            cursor: pointer;
             width: 100%;
+            max-width: 420px;
+            border-radius: 14px;
+            font-weight: 900;
+            text-transform: uppercase;
+            letter-spacing: 1.2px;
+            transition: background 0.3s, transform 0.18s, box-shadow 0.3s;
+            outline: none;
+        }
+        button:hover, button:focus {
+            background: linear-gradient(145deg, var(--button-hover-color), var(--accent-color));
+            transform: translateY(-2px) scale(1.04);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.22);
+        }
+        button:active {
+            transform: translateY(0) scale(0.98);
+            box-shadow: 0 1px 2px rgba(0,0,0,0.12);
+        }
+        /* --- User List Toggle (Top Right) --- */
+        #floating-user-list-container {
+            position: fixed;
+            top: 18px;
+            right: 18px;
+            background-color: rgba(30,30,30,0.98);
+            border: 2.5px solid var(--border-color);
+            border-radius: 16px;
+            box-shadow: 0 8px 24px #00BFFF, 0 2px 8px #000;
+            padding: 18px 12px 12px 12px;
+            width: 240px;
+            min-height: 60px;
+            z-index: 1000;
+            cursor: default;
+            overflow: hidden;
+            transition: width 0.3s, height 0.3s, background-color 0.3s, box-shadow 0.3s;
+        }
+        #floating-user-list-container.collapsed {
+            width: 44px;
+            height: 44px;
+            padding: 0;
+            display: flex;
+            align-items: center;
             justify-content: center;
-            align-items: flex-start;
+            background-color: rgba(30,30,30,0.8);
         }
+        #floating-user-list-container.collapsed .toggle-handle {
+            width: 100%;
+            height: 100%;
+            border-bottom: none;
+        }
+        #floating-user-list-container.collapsed #user-list-content {
+            display: none;
+        }
+        #floating-user-list-container h4 {
+            margin-top: 0;
+            margin-bottom: 10px;
+            color: var(--accent-color);
+            font-size: 1.18em;
+            text-shadow: 0 0 5px rgba(0,191,255,0.2);
+        }
+        #user-list {
+            list-style-type: none;
+            padding: 0;
+            margin: 0;
+            max-height: 260px;
+            overflow-y: auto;
+            font-size: 1em;
+            text-align: left;
+            color: var(--text-color);
+            scrollbar-width: thin;
+            scrollbar-color: var(--accent-color) var(--dark-bg);
+        }
+        #user-list::-webkit-scrollbar {
+            width: 8px;
+        }
+        #user-list::-webkit-scrollbar-thumb {
+            background-color: var(--accent-color);
+            border-radius: 10px;
+            border: 2px solid var(--dark-bg);
+        }
+        #user-list li {
+            padding: 8px 0;
+            border-bottom: 1px solid rgba(255,255,255,0.10);
+            word-wrap: break-word;
+            transition: color 0.2s;
+        }
+        #user-list li:hover {
+            color: var(--accent-color);
+        }
+        #user-list li:last-child {
+            border-bottom: none;
+        }
+        .toggle-handle {
+            position: absolute;
+            top: 0; right: 0; left: 0;
+            width: 100%;
+            height: 44px;
+            background-color: rgba(0,0,0,0.22);
+            border-bottom: 1px solid rgba(255,255,255,0.08);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--chat-mention-color);
+            font-size: 1.7em;
+            font-weight: bold;
+            transition: background-color 0.3s;
+            border-top-left-radius: 14px;
+            border-top-right-radius: 14px;
+        }
+        .toggle-handle:hover {
+            background-color: rgba(0,0,0,0.32);
+        }
+        .toggle-handle span {
+            transition: transform 0.3s;
+        }
+        .collapsed .toggle-handle span {
+            transform: rotate(90deg);
+        }
+        /* --- Chat Styling --- */
+        #chat {
+            background-color: #2a2d32;
+            border: 1.5px solid #333;
+            border-radius: 12px;
+            padding: 22px 16px 16px 16px;
+            margin-top: 30px;
+            text-align: left;
+            box-shadow: 0 3px 10px rgba(0,0,0,0.18);
+            color: var(--text-color);
+        }
+        #chat h4 {
+            margin-bottom: 12px;
+            font-size: 1.18em;
+        }
+        #chat-messages {
+            max-height: 240px;
+            overflow-y: auto;
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 12px;
+            margin-bottom: 12px;
+            font-size: 1em;
+            color: var(--text-color);
+            scrollbar-width: thin;
+            scrollbar-color: var(--accent-color) var(--dark-bg);
+        }
+        #chat-messages::-webkit-scrollbar {
+            width: 8px;
+        }
+        #chat-messages::-webkit-scrollbar-thumb {
+            background-color: var(--accent-color);
+            border-radius: 10px;
+            border: 2px solid var(--dark-bg);
+        }
+        #chat-messages div {
+            margin-bottom: 8px;
+            padding: 4px 0;
+            line-height: 1.4;
+        }
+        .chat-sender {
+            font-weight: 700;
+            color: var(--chat-mention-color);
+            margin-right: 8px;
+            text-shadow: 0 0 3px rgba(70,211,255,0.3);
+        }
+        #chat-input {
+            width: 100%;
+            resize: vertical;
+            min-height: 60px;
+            font-size: 1em;
+            padding: 12px;
+            margin: 0;
+            background-color: var(--dark-bg);
+            border: 1.5px solid var(--border-color);
+            border-radius: 10px;
+            color: var(--text-color);
+            box-shadow: 0 1px 5px rgba(0,0,0,0.18) inset;
+            transition: border-color 0.3s, box-shadow 0.3s, transform 0.2s;
+        }
+        #chat-input:focus {
+            border-color: var(--accent-color);
+            box-shadow: 0 0 8px rgba(0,191,255,0.18);
+            transform: translateY(-2px);
+        }
+        #chat button {
+            margin-top: 14px;
+            width: 100%;
+            padding: 14px;
+            font-size: 1em;
+        }
+        /* --- Responsive Design for Mobile --- */
+        @media (max-width: 768px) {
+            .container {
+                padding: 16px 2vw 18px 2vw;
+                width: 100%;
+                min-height: 100vh;
+                border-radius: 0;
+                box-shadow: none;
+                display: flex;
+                flex-direction: column;
+                justify-content: flex-start;
+            }
+            body {
+                align-items: flex-start;
+            }
+            h2 { font-size: 1.5em; margin-bottom: 16px; }
+            h3 { font-size: 1.15em; margin-bottom: 10px; }
+            p, input, textarea, button { font-size: 1em; }
+            input, textarea, button { max-width: 100vw; }
+            #room-content { flex-direction: column; gap: 18px; align-items: center; }
+            #film-chat-section { width: 100%; }
+            #html5-film-player { max-width: 100%; min-height: 180px; margin: 0 auto 18px auto; border-radius: 10px; }
+            #chat { margin-top: 18px; width: 100%; padding: 14px; border-radius: 10px; }
+            #chat h4 { font-size: 1em; margin-bottom: 8px; }
+            #chat-messages { max-height: 120px; font-size: 0.95em; padding-bottom: 8px; margin-bottom: 8px; }
+            #chat-input { min-height: 44px; font-size: 0.95em; padding: 8px; }
+            #chat button { margin-top: 10px; padding: 10px; }
+            #floating-user-list-container {
+                position: fixed;
+                top: 8px;
+                right: 8px;
+                width: 170px;
+                padding: 8px;
+                z-index: 1001;
+                background-color: rgba(30,30,30,0.98);
+                box-shadow: 0 4px 10px rgba(0,0,0,0.6);
+                border-radius: 12px;
+            }
+            #floating-user-list-container.collapsed {
+                width: 38px; height: 38px; padding: 0; border-radius: 12px;
+            }
+            #floating-user-list-container h4 { font-size: 1em; margin-bottom: 8px; }
+            #user-list { max-height: 90px; font-size: 0.85em; }
+            .toggle-handle { height: 38px; font-size: 1.3em; border-top-left-radius: 12px; border-top-right-radius: 12px; }
+        }
+        /* --- End of Redesign --- */
 
-        #film-chat-section {
-            flex: 3;
-            min-width: 350px; /* Slightly wider minimum for film/chat */
-        }
         /* Styling for the HTML5 video player */
         #html5-film-player {
             width: 100%;
@@ -199,8 +362,8 @@
             outline: none;
         }
         #chat {
-            background-color: var(--light-bg);
-            border: 1px solid var(--border-color);
+            background-color: #2a2d32;
+            border: 1.5px solid #333;
             border-radius: 10px;
             padding: 20px;
             margin-top: 30px;
@@ -522,10 +685,195 @@
                 border-bottom-right-radius: 12px;
             }
         }
+        /* --- 1. Smooth Screen Fade Transitions (more obvious) --- */
+        .screen {
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 1.7s cubic-bezier(0.4,0,0.2,1); /* Slower fade */
+        }
+        .screen:not(.hidden) {
+            opacity: 1;
+            pointer-events: auto;
+        }
+        /* --- 2. Animated Chat Message Entry (more obvious) --- */
+        .chat-message-animate {
+            animation: chatFadeIn 1.3s cubic-bezier(0.4,0,0.2,1); /* Slower, more movement */
+        }
+        @keyframes chatFadeIn {
+            0% { opacity: 0; transform: translateY(60px) scale(0.92); }
+            60% { opacity: 0.7; transform: translateY(-10px) scale(1.03); }
+            100% { opacity: 1; transform: translateY(0) scale(1); }
+        }
+        /* Optional: Chat cascade effect */
+        .chat-message-animate {
+            will-change: opacity, transform;
+        }
+        /* --- 3. Button Ripple Effect --- */
+        .ripple {
+            position: relative;
+            overflow: hidden;
+        }
+        .ripple-effect {
+            position: absolute;
+            border-radius: 50%;
+            transform: scale(0);
+            animation: ripple 0.6s linear;
+            background: rgba(0,191,255,0.4);
+            pointer-events: none;
+        }
+        @keyframes ripple {
+            to {
+                transform: scale(2.5);
+                opacity: 0;
+            }
+        }
+        /* --- 4. Desktop/Mobile Toggle Button --- */
+        #view-toggle-btn {
+            position: fixed;
+            bottom: 18px;
+            left: 18px;
+            z-index: 2000;
+            background: var(--accent-color);
+            color: var(--dark-bg);
+            border: none;
+            border-radius: 8px;
+            padding: 10px 18px;
+            font-size: 1em;
+            font-weight: 700;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+            cursor: pointer;
+            opacity: 0.85;
+            transition: background 0.3s, opacity 0.2s;
+            display: none;
+        }
+        #view-toggle-btn:hover {
+            background: var(--button-hover-color);
+            opacity: 1;
+        }
+        body.desktop-override .container {
+            min-width: 700px !important;
+            max-width: 950px !important;
+            border-radius: 15px !important;
+            box-shadow: 0 10px 30px var(--shadow-color-dark) !important;
+        }
+        body.desktop-override #floating-user-list-container {
+            position: absolute !important;
+            top: 30px !important;
+            right: 30px !important;
+            left: auto !important;
+            bottom: auto !important;
+            width: 200px !important;
+        }
+        @media (max-width: 768px) {
+            #view-toggle-btn { display: block; }
+        }
+        /* --- Video Loading Spinner Overlay --- */
+        #video-loading-spinner {
+            position: absolute;
+            left: 0; top: 0; right: 0; bottom: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: rgba(0,0,0,0.55);
+            z-index: 10;
+            border-radius: 10px;
+        }
+        .spinner {
+            border: 6px solid #f3f3f3;
+            border-top: 6px solid var(--accent-color);
+            border-radius: 50%;
+            width: 48px;
+            height: 48px;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        /* --- TIP: For much better video performance, use a real video CDN or streaming service (GitHub is slow for video). Try Google Drive, Dropbox, Streamable, or Firebase Storage for production. --- */
+        /* --- 1. Much More Noticeable & Smooth Animations --- */
+        .screen {
+            opacity: 0;
+            pointer-events: none;
+            transform: translateX(40px) scale(0.98);
+            transition: opacity 1.2s cubic-bezier(0.4,0,0.2,1), transform 0.8s cubic-bezier(0.4,0,0.2,1);
+        }
+        .screen:not(.hidden) {
+            opacity: 1;
+            pointer-events: auto;
+            transform: translateX(0) scale(1);
+        }
+        .screen.slide-out {
+            opacity: 0;
+            transform: translateX(-40px) scale(0.98);
+            transition: opacity 0.7s, transform 0.7s;
+        }
+        .chat-message-animate {
+            animation: chatFadeIn 1.3s cubic-bezier(0.4,0,0.2,1);
+        }
+        @keyframes chatFadeIn {
+            0% { opacity: 0; transform: translateY(60px) scale(0.92); }
+            60% { opacity: 0.7; transform: translateY(-10px) scale(1.03); }
+            100% { opacity: 1; transform: translateY(0) scale(1); }
+        }
+        .user-list-animate {
+            animation: userListFadeIn 1s cubic-bezier(0.4,0,0.2,1);
+        }
+        @keyframes userListFadeIn {
+            from { opacity: 0; transform: translateY(-20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        #mobile-video-warning {
+            display: none;
+            background: #ffb300;
+            color: #222;
+            padding: 10px 18px;
+            border-radius: 8px;
+            margin: 10px auto 18px auto;
+            max-width: 600px;
+            font-size: 1em;
+            text-align: center;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+        }
+        .screen.no-animate {
+            transition: none !important;
+        }
+        /* --- Simple Fade Screen Transition --- */
+        .screen {
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 1.2s cubic-bezier(0.4,0,0.2,1);
+        }
+        .screen:not(.hidden) {
+            opacity: 1;
+            pointer-events: auto;
+        }
+        .screen.fade-out {
+            opacity: 0;
+            transition: opacity 0.7s;
+        }
+        /* --- Basic Fade Screen Transition --- */
+        .screen {
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.5s cubic-bezier(0.4,0,0.2,1);
+        }
+        .screen.visible {
+            opacity: 1;
+            pointer-events: auto;
+        }
+        /* ... keep chat/user list animations ... */
     </style>
 </head>
 <body>
-
+    <div id="floating-user-list-container" class="hidden collapsed">
+        <div class="toggle-handle" onclick="toggleUserList()">
+            <span id="toggle-arrow">▶</span> </div>
+        <div id="user-list-content">
+            <h4>Users</h4>
+            <ul id="user-list"></ul>
+        </div>
+    </div>
     <div class="container">
         <div id="username-prompt" class="screen">
             <h2>Ktb Smitk</h2>
@@ -566,19 +914,25 @@
             <h3>Film Room (<span id="current-room-code"></span>)</h3>
             <div id="room-content">
                 <div id="film-chat-section">
-                    <video id="html5-film-player"
-                                width="100%" height="400px"
-                                controls
-                                preload="metadata"
-                                playsinline
-                                webkit-playsinline
-                                x5-playsinline
-                                x5-video-player-type="h5"
-                                x5-video-player-fullscreen="true"
-                                style="display: block; margin: 0 auto 30px auto; border-radius: 10px; box-shadow: 0 8px 25px var(--shadow-color-dark); border: 2px solid var(--border-color);"
-                    >
-                        Your browser does not support the video tag.
-                    </video>
+                    <div id="video-wait-text" style="text-align:center; margin-bottom:10px; color:#aaa; font-size:1em;">Tsana Shwiya :)</div>
+                    <div style="position:relative;">
+                        <video id="html5-film-player"
+                                    width="100%" height="400px"
+                                    controls
+                                    preload="auto"
+                                    playsinline
+                                    webkit-playsinline
+                                    x5-playsinline
+                                    x5-video-player-type="h5"
+                                    x5-video-player-fullscreen="true"
+                                    style="display: block; margin: 0 auto 30px auto; border-radius: 10px; box-shadow: 0 8px 25px var(--shadow-color-dark); border: 2px solid var(--border-color);"
+                        >
+                            Your browser does not support the video tag.
+                        </video>
+                        <div id="video-loading-spinner">
+                            <div class="spinner"></div>
+                        </div>
+                    </div>
                     <button id="ios-play-button" onclick="forcePlayOnIOS()" style="display: none; margin: 10px auto; padding: 10px 20px; background: var(--accent-color); color: white; border: none; border-radius: 5px; cursor: pointer;">
                         Tap to Play Video (iOS)
                     </button>
@@ -591,20 +945,12 @@
                         <span id="debug-url"></span><br>
                         <span id="debug-error"></span>
                     </div>
-                    <div id="chat">
-                        <h4>Chat</h4>
+                    <!-- CHAT AREA -->
+                    <div id="chat" style="background: #23272b; border: 2px solid #444; border-radius: 10px; box-shadow: 0 2px 8px #0002; padding: 16px 12px 10px 12px; margin-top: 18px; margin-bottom: 8px;">
+                        <h4 style="margin-top:0; color:#e0e0e0;">Chat</h4>
                         <div id="chat-messages"></div>
-                        <textarea id="chat-input" placeholder="Type a message..." rows="2"></textarea>
-                        <button onclick="sendChatMessage(event)">Sift?</button>
-                    </div>
-                </div>
-                <div id="floating-user-list-container" class="hidden collapsed">
-                    <div class="toggle-handle" onclick="toggleUserList()">
-                        <span id="toggle-arrow">▶</span> </div>
-                    <div id="user-list-content">
-                        <h4>Users</h4>
-                        <ul id="user-list">
-                        </ul>
+                        <textarea id="chat-input" placeholder="Type a message..." rows="2" style="width:100%; margin-top:8px; background:#181a1b; color:#eee; border:1px solid #333; border-radius:6px; padding:8px;"></textarea>
+                        <button onclick="sendChatMessage(event)" style="margin-top:8px; background: var(--accent-color); color: #111; border: none; border-radius: 6px; padding: 8px 18px; font-size: 1em; cursor: pointer; box-shadow: 0 2px 8px rgba(0,0,0,0.18);">Sift?</button>
                     </div>
                 </div>
             </div>
@@ -663,11 +1009,38 @@
         let alternativeFormatAttempts = 0;
         let alternativeFormats = [];
 
+        // --- 4. Desktop/Mobile View Toggle for iOS/Mobile ---
+        function isMobileDevice() {
+            return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+        }
+        function isIOSDevice() {
+            return /iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+        }
+        function toggleDesktopView() {
+            const body = document.body;
+            const btn = document.getElementById('view-toggle-btn');
+            if (body.classList.contains('desktop-override')) {
+                body.classList.remove('desktop-override');
+                btn.textContent = 'Desktop View';
+            } else {
+                body.classList.add('desktop-override');
+                btn.textContent = 'Mobile View';
+            }
+        }
+        // Show the toggle button only on mobile/iOS
         document.addEventListener('DOMContentLoaded', function() {
             checkUsername();
             const chatInput = document.getElementById('chat-input');
             if (chatInput) {
-                chatInput.addEventListener('keypress', sendChatMessage);
+                chatInput.addEventListener('keypress', function(event) {
+                    if (event.key === 'Enter' && !event.shiftKey) {
+                        sendChatMessage(event);
+                    }
+                });
+            }
+            const chatButton = document.querySelector('#chat button');
+            if (chatButton) {
+                chatButton.onclick = sendChatMessage;
             }
 
             // ADD BACK: Video player event listeners for time updates (for user list display only)
@@ -677,17 +1050,38 @@
                     timeUpdateInterval = setTimeout(() => {
                         updatePlaybackTime();
                         timeUpdateInterval = null;
-                    }, 2000);
+                    }, 1000);
                 }
             });
+            if (isMobileDevice() || isIOSDevice()) {
+                document.getElementById('view-toggle-btn').style.display = 'block';
+            }
+            // --- Prevent initial screen animation glitch ---
+            // Add .no-animate to all screens initially
+            document.querySelectorAll('.screen').forEach(screen => {
+                screen.classList.add('no-animate');
+            });
+            // After first screen is shown, remove .no-animate from all screens
+            setTimeout(() => {
+                document.querySelectorAll('.screen').forEach(screen => {
+                    screen.classList.remove('no-animate');
+                });
+            }, 100); // 100ms is enough for initial render
         });
 
 
         function showScreen(screenId) {
             document.querySelectorAll('.screen').forEach(screen => {
-                screen.classList.add('hidden');
+                if (!screen.classList.contains('hidden')) {
+                    screen.classList.add('hidden');
+                }
             });
-            document.getElementById(screenId).classList.remove('hidden');
+            const target = document.getElementById(screenId);
+            target.classList.remove('hidden');
+            // Force reflow for transition
+            void target.offsetWidth;
+            target.style.opacity = 1;
+            console.log('[DEBUG] showScreen:', screenId, 'fade-in triggered');
 
             if (screenId === 'room') {
                 document.getElementById('floating-user-list-container').classList.add('collapsed');
@@ -749,55 +1143,61 @@
             return Math.random().toString(36).substr(2, 4).toUpperCase();
         }
 
-        // Function to process video URLs for better compatibility
+        // OPTIMIZATION: Add URL cache to avoid repeated processing
+        const urlCache = new Map();
+
+        // Function to process video URLs for better compatibility (OPTIMIZED)
         function processVideoUrl(originalUrl) {
+            // Check cache first
+            if (urlCache.has(originalUrl)) {
+                console.log("Using cached URL:", originalUrl);
+                return urlCache.get(originalUrl);
+            }
+            
             let processedUrl = originalUrl;
             
-            console.log("Original URL:", originalUrl);
+            console.log("Processing URL:", originalUrl);
             
-            // Only apply iOS-specific processing if on iOS
-            if (isIOS) {
-                console.log("Processing video URL for iOS device");
-            }
+            // OPTIMIZATION: Use more efficient string operations
+            const isDropbox = processedUrl.includes('dropbox.com');
+            const isGoogleDrive = processedUrl.includes('drive.google.com');
             
-            // Handle Dropbox URLs
-            if (processedUrl.includes('dropbox.com')) {
-                console.log("Detected Dropbox URL, processing...");
+            // Handle Dropbox URLs (OPTIMIZED)
+            if (isDropbox) {
+                console.log("Processing Dropbox URL...");
                 
-                // Convert Dropbox sharing links to direct download links
+                // OPTIMIZATION: Use more efficient URL manipulation
                 if (processedUrl.includes('?dl=0')) {
                     processedUrl = processedUrl.replace('?dl=0', '?dl=1');
-                    console.log("Changed dl=0 to dl=1");
                 } else if (!processedUrl.includes('?dl=1')) {
-                    // Add dl=1 parameter if not present
                     processedUrl += (processedUrl.includes('?') ? '&' : '?') + 'dl=1';
-                    console.log("Added dl=1 parameter");
                 }
                 
-                // For MPEG files, try alternative formats
-                if (processedUrl.includes('.mpeg') || processedUrl.includes('.mpg')) {
-                    console.log("MPEG file detected, trying alternative formats...");
-                    // Try raw=1 instead of dl=1 for MPEG files
-                    const alternativeUrl = processedUrl.replace('?dl=1', '?raw=1');
-                    console.log("Alternative URL:", alternativeUrl);
+                console.log("Processed Dropbox URL:", processedUrl);
+            }
+            
+            // Handle Google Drive URLs (OPTIMIZED)
+            if (isGoogleDrive) {
+                console.log("Processing Google Drive URL...");
+                
+                // OPTIMIZATION: More efficient regex with early return
+                if (processedUrl.includes('/view')) {
+                    const fileIdMatch = processedUrl.match(/\/d\/([a-zA-Z0-9_-]+)\/view/);
+                    if (fileIdMatch && fileIdMatch[1]) {
+                        processedUrl = `https://drive.google.com/uc?export=download&id=${fileIdMatch[1]}`;
+                    }
+                } else if (processedUrl.includes('/file/d/')) {
+                    const fileIdMatch = processedUrl.match(/\/file\/d\/([a-zA-Z0-9_-]+)/);
+                    if (fileIdMatch && fileIdMatch[1]) {
+                        processedUrl = `https://drive.google.com/uc?export=download&id=${fileIdMatch[1]}`;
+                    }
                 }
                 
-                console.log("Final processed Dropbox URL:", processedUrl);
+                console.log("Processed Google Drive URL:", processedUrl);
             }
             
-            // Handle Google Drive URLs
-            if (processedUrl.includes('drive.google.com') && processedUrl.includes('/view')) {
-                const fileIdMatch = processedUrl.match(/\/d\/([a-zA-Z0-9_-]+)\/view/);
-                if (fileIdMatch && fileIdMatch[1]) {
-                    processedUrl = `https://drive.google.com/uc?export=download&id=${fileIdMatch[1]}`;
-                }
-            } else if (processedUrl.includes('drive.google.com') && processedUrl.includes('/file/d/')) {
-                const fileIdMatch = processedUrl.match(/\/file\/d\/([a-zA-Z0-9_-]+)/);
-                if (fileIdMatch && fileIdMatch[1]) {
-                    processedUrl = `https://drive.google.com/uc?export=download&id=${fileIdMatch[1]}`;
-                }
-            }
-            
+            // Cache the result
+            urlCache.set(originalUrl, processedUrl);
             console.log("Final processed URL:", processedUrl);
             return processedUrl;
         }
@@ -901,13 +1301,12 @@
                 const docSnap = await roomRef.get();
 
                 if (docSnap.exists) {
-                    document.getElementById('create-error').innerText = "Room code already exists. Please try creating again.";
+                    document.getElementById('create-error').innerText = "Room deja kyna dir room lokhra";
                     return;
                 }
 
                 // Process the video URL for better compatibility
                 videoUrl = processVideoUrl(videoUrl);
-
 
                 const roomInfo = {
                     film: videoUrl, // Store the processed video URL
@@ -931,6 +1330,13 @@
                 myRoom = code;
                 myFilm = videoUrl; // Set myFilm to the processed URL
 
+                // OPTIMIZATION: Start preloading video immediately after room creation
+                const videoPlayer = document.getElementById('html5-film-player');
+                if (videoPlayer) {
+                    videoPlayer.src = videoUrl;
+                    videoPlayer.load();
+                }
+
             } catch (error) {
                 console.error("Error creating room:", error);
                 document.getElementById('create-error').innerText = `Error creating room: ${error.message}`;
@@ -941,7 +1347,7 @@
         async function joinRoom() {
             let code = document.getElementById('join-code').value.trim().toUpperCase();
             if (!code) {
-                document.getElementById('join-error').innerText = "Please enter a room code.";
+                document.getElementById('join-error').innerText = "Ktb code";
                 return;
             }
 
@@ -950,13 +1356,13 @@
                 const doc = await roomRef.get();
 
                 if (!doc.exists) {
-                    document.getElementById('join-error').innerText = "Room not found.";
+                    document.getElementById('join-error').innerText = "Room kynash";
                     return;
                 }
 
                 const roomData = doc.data();
                 if (roomData.users && roomData.users[myName]) {
-                    document.getElementById('join-error').innerText = "You are already in this room.";
+                    document.getElementById('join-error').innerText = "Nta deja kyn fiha?";
                 } else {
                     await roomRef.update({
                         // User's own currentTime will still be stored
@@ -968,12 +1374,26 @@
                 myRole = 'client';
                 myFilm = roomData.film; // Get film URL from Firestore (now it's a generic video URL)
 
+                // OPTIMIZATION: Start preloading video immediately after joining
+                const videoPlayer = document.getElementById('html5-film-player');
+                if (videoPlayer && myFilm) {
+                    const processedUrl = processVideoUrl(myFilm);
+                    videoPlayer.src = processedUrl;
+                    videoPlayer.load();
+                }
+
                 goToRoom();
 
             } catch (error) {
                 console.error("Error joining room:", error);
                 document.getElementById('join-error').innerText = `Error joining room: ${error.message}`;
             }
+        }
+
+        // Add this before goToRoom
+        function showVideoSpinner(show) {
+            const spinner = document.getElementById('video-loading-spinner');
+            if (spinner) spinner.style.display = show ? 'flex' : 'none';
         }
 
         // --- MODIFIED: Go to Room to load HTML5 video player ---
@@ -987,73 +1407,105 @@
             // CHANGED: Target the HTML5 video player with iOS-specific handling
             const videoPlayer = document.getElementById('html5-film-player');
             
-            // Process the video URL for iOS compatibility
+            // Always set preload and playsinline for best performance
+            videoPlayer.setAttribute('preload', 'auto');
+            videoPlayer.setAttribute('playsinline', '');
+            videoPlayer.setAttribute('webkit-playsinline', '');
+            videoPlayer.setAttribute('x5-playsinline', '');
+            videoPlayer.setAttribute('x5-video-player-type', 'h5');
+            videoPlayer.setAttribute('x5-video-player-fullscreen', 'true');
+            
+            // Remove all existing event listeners to prevent duplicates
+            videoPlayer.removeEventListener('error', videoPlayer._errorHandler);
+            videoPlayer.removeEventListener('canplay', videoPlayer._canplayHandler);
+            videoPlayer.removeEventListener('loadstart', videoPlayer._loadstartHandler);
+            videoPlayer.removeEventListener('loadedmetadata', videoPlayer._loadedmetadataHandler);
+            videoPlayer.removeEventListener('loadeddata', videoPlayer._loadeddataHandler);
+            videoPlayer.removeEventListener('canplaythrough', videoPlayer._canplaythroughHandler);
+            videoPlayer.removeEventListener('waiting', videoPlayer._waitingHandler);
+            videoPlayer.removeEventListener('stalled', videoPlayer._stalledHandler);
+            
+            // Process the video URL for iOS compatibility (cached for performance)
             const processedVideoUrl = processVideoUrl(myFilm);
             
-            // Set video source with optimized loading
+            // Show spinner before loading
+            showVideoSpinner(true);
+            
+            // Set video source immediately
             videoPlayer.src = processedVideoUrl;
-            videoPlayer.load(); // Load the video source
             
-            // Optimize loading by setting lower quality initially
-            videoPlayer.preload = 'metadata';
+            // Start loading immediately
+            videoPlayer.load();
             
-            // iOS-specific video event handling
-            videoPlayer.addEventListener('error', function(e) {
-                console.error('Video error on iOS:', e);
+            // Try to play as soon as possible
+            setTimeout(() => {
+                videoPlayer.muted = true;
+                videoPlayer.play().then(() => {
+                    setTimeout(() => { videoPlayer.muted = false; }, 30);
+                }).catch(() => {
+                    videoPlayer.muted = false;
+                    videoPlayer.play().catch(()=>{});
+                });
+            }, 30); // Try to play after 30ms
+            
+            // Create event handlers as properties to avoid duplicates
+            videoPlayer._errorHandler = function(e) {
+                showVideoSpinner(false); // Hide spinner on error
+                console.error('W9a3 mochkil:', e);
                 console.error('Error details:', videoPlayer.error);
-                
-                let errorMessage = 'Video error occurred';
-                if (videoPlayer.error) {
-                    switch(videoPlayer.error.code) {
-                        case 1: errorMessage = 'Video loading aborted'; break;
-                        case 2: errorMessage = 'Network error - check your connection'; break;
-                        case 3: errorMessage = 'Video decoding failed - format not supported'; break;
-                        case 4: errorMessage = 'Video not supported by browser'; break;
-                    }
-                }
+                let errorMessage = 'W9a3 mochkil';
                 updateDebugStatus(errorMessage);
                 updateDebugError(errorMessage);
                 
                 // Try alternative video formats for iOS
                 tryAlternativeVideoFormats(processedVideoUrl, videoPlayer);
-            });
+            };
             
-            // iOS requires user interaction to play video
-            videoPlayer.addEventListener('canplay', function() {
+            videoPlayer._canplayHandler = function() {
+                showVideoSpinner(false); // Hide spinner on canplay
                 console.log('Video can play on iOS');
                 updateDebugStatus('Video can play on iOS');
-            });
+            };
             
-            // Add more detailed event listeners for iOS debugging
-            videoPlayer.addEventListener('loadstart', function() {
+            videoPlayer._loadstartHandler = function() {
                 console.log('iOS: Video load started');
                 updateDebugStatus('Video load started');
-            });
+            };
             
-            videoPlayer.addEventListener('loadedmetadata', function() {
+            videoPlayer._loadedmetadataHandler = function() {
                 console.log('iOS: Video metadata loaded');
                 updateDebugStatus('Video metadata loaded');
-            });
+            };
             
-            videoPlayer.addEventListener('loadeddata', function() {
+            videoPlayer._loadeddataHandler = function() {
                 console.log('iOS: Video data loaded');
                 updateDebugStatus('Video data loaded');
-            });
+            };
             
-            videoPlayer.addEventListener('canplaythrough', function() {
+            videoPlayer._canplaythroughHandler = function() {
                 console.log('iOS: Video can play through');
                 updateDebugStatus('Video can play through - Ready!');
-            });
+            };
             
-            videoPlayer.addEventListener('waiting', function() {
+            videoPlayer._waitingHandler = function() {
                 console.log('iOS: Video is waiting for data');
                 updateDebugStatus('Video is waiting for data...');
-            });
+            };
             
-            videoPlayer.addEventListener('stalled', function() {
+            videoPlayer._stalledHandler = function() {
                 console.log('iOS: Video playback stalled');
                 updateDebugStatus('Video playback stalled');
-            });
+            };
+            
+            // Add event listeners with stored references
+            videoPlayer.addEventListener('error', videoPlayer._errorHandler);
+            videoPlayer.addEventListener('canplay', videoPlayer._canplayHandler);
+            videoPlayer.addEventListener('loadstart', videoPlayer._loadstartHandler);
+            videoPlayer.addEventListener('loadedmetadata', videoPlayer._loadedmetadataHandler);
+            videoPlayer.addEventListener('loadeddata', videoPlayer._loadeddataHandler);
+            videoPlayer.addEventListener('canplaythrough', videoPlayer._canplaythroughHandler);
+            videoPlayer.addEventListener('waiting', videoPlayer._waitingHandler);
+            videoPlayer.addEventListener('stalled', videoPlayer._stalledHandler);
             
             // Show debug info and manual play button for iOS (hidden by default)
             if (isIOS) {
@@ -1067,12 +1519,13 @@
                     debugUrl.textContent = 'URL: ' + processedVideoUrl;
                 }
                 
+                // OPTIMIZATION: Reduced timeout for faster response
                 setTimeout(() => {
                     const iosPlayButton = document.getElementById('ios-play-button');
                     if (iosPlayButton) {
                         iosPlayButton.style.display = 'block';
                     }
-                }, 1000); // Reduced from 3 seconds to 1 second
+                }, 500); // Reduced from 1000ms to 500ms
             } else {
                 // Hide debug info for PC too
                 const debugInfo = document.getElementById('ios-debug-info');
@@ -1086,28 +1539,10 @@
                 }
             }
             
-            // Attempt to play the video with optimized settings
-            videoPlayer.muted = true; // Mute initially for faster loading
-            videoPlayer.play().then(() => {
-                console.log("Video started playing successfully");
-                // Unmute after successful play
-                setTimeout(() => {
-                    videoPlayer.muted = false;
-                }, 100);
-            }).catch(e => {
-                console.warn("Video play failed (likely requires user interaction on iOS):", e);
-                // Try unmuted play as fallback
-                videoPlayer.muted = false;
-                videoPlayer.play().catch(e2 => {
-                    console.warn("Unmuted play also failed:", e2);
-                });
+            showScreen('room'); // Always show the room screen as the last step
+            requestAnimationFrame(() => {
+                setTimeout(listenForRoomUpdates, 0);
             });
-            
-            showScreen('room');
-            listenForRoomUpdates();
-
-            // REMOVED: Time update listener that was causing video looping
-            // Individual user times will not be updated in real-time to prevent conflicts
         }
 
         // Keep updatePlaybackTime to update individual user's time for the list display
@@ -1198,12 +1633,12 @@
                     // No need to constantly check and update it
 
                 } else {
-                    alert("The room you were in no longer exists.");
+                    alert("Had room mb9atch kyna");
                     leaveRoom();
                 }
             }, error => {
                 console.error("Error listening to room updates:", error);
-                alert("Disconnected from room updates due to an error. Please try rejoining.");
+                alert("3wd dkhol");
                 leaveRoom();
             });
         }
@@ -1244,45 +1679,27 @@
             }
         }
 
-        function updateChat(messages) {
-            const chatMessagesDiv = document.getElementById('chat-messages');
-            chatMessagesDiv.innerHTML = '';
-            if (messages) {
-                // Ensure messages are sorted if they have a timestamp property
-                messages.sort((a, b) => {
-                    const tsA = a.timestamp && a.timestamp.toDate ? a.timestamp.toDate() : new Date(0);
-                    const tsB = b.timestamp && b.timestamp.toDate ? b.timestamp.toDate() : new Date(0);
-                    return tsA - tsB;
-                });
-
-                messages.forEach(msg => {
-                    const msgDiv = document.createElement('div');
-                    const senderSpan = document.createElement('span');
-                    senderSpan.classList.add('chat-sender');
-                    senderSpan.textContent = msg.sender + ': ';
-
-                    const textSpan = document.createElement('span');
-                    textSpan.textContent = msg.text;
-
-                    msgDiv.appendChild(senderSpan);
-                    msgDiv.appendChild(textSpan);
-                    chatMessagesDiv.appendChild(msgDiv);
-                });
-                chatMessagesDiv.scrollTop = chatMessagesDiv.scrollHeight;
-            }
-        }
-
         // Update user list to show time and format it
         function updateUserList(users) {
             const userListUl = document.getElementById('user-list');
-            userListUl.innerHTML = '';
-
-            if (!users) {
-                console.warn("updateUserList called with no users data.");
+            if (!userListUl) {
+                console.warn('[DEBUG] #user-list not found in DOM');
                 return;
             }
-
+            userListUl.innerHTML = '';
+            console.log('[DEBUG] updateUserList called with:', users);
+            if (!users || Object.keys(users).length === 0) {
+                // Show a message if user list is empty
+                const li = document.createElement('li');
+                li.style.color = '#e53935';
+                li.style.textAlign = 'center';
+                li.textContent = 'No users in room. (DEBUG: users object is empty or undefined)';
+                userListUl.appendChild(li);
+                console.warn('[DEBUG] No users in room. users object:', users);
+                return;
+            }
             const userNames = Object.keys(users);
+            console.log('[DEBUG] Usernames in room:', userNames);
             userNames.forEach(name => {
                 const userLi = document.createElement('li');
                 const userData = users[name];
@@ -1352,9 +1769,9 @@
         
         function tryAlternativeVideoFormats(originalUrl, videoPlayer) {
             if (alternativeFormatAttempts === 0) {
-                // First time trying alternatives
-                alternativeFormats = getAlternativeVideoFormats(originalUrl);
-                console.log('Alternative formats to try:', alternativeFormats);
+                // OPTIMIZATION: Limit alternatives to most likely working formats
+                alternativeFormats = getAlternativeVideoFormats(originalUrl).slice(0, 2); // Only try first 2 alternatives
+                console.log('Alternative formats to try (limited):', alternativeFormats);
             }
             
             if (alternativeFormatAttempts < alternativeFormats.length) {
@@ -1365,105 +1782,69 @@
                 updateDebugStatus(`Trying format ${alternativeFormatAttempts}/${alternativeFormats.length}...`);
                 updateDebugUrl(nextUrl);
                 
+                // OPTIMIZATION: Set source and load immediately
                 videoPlayer.src = nextUrl;
                 videoPlayer.load();
+                
+                // OPTIMIZATION: Try to play immediately after a short delay
+                setTimeout(() => {
+                    if (videoPlayer.readyState >= 1) { // HAVE_METADATA
+                        videoPlayer.play().catch(e => {
+                            console.warn(`Alternative format ${alternativeFormatAttempts} failed to play:`, e);
+                        });
+                    }
+                }, 1000); // Reduced from longer delays
             } else {
                 // All alternatives tried, show final error
                 const detectedFormat = detectVideoFormat(originalUrl);
-                updateDebugStatus(`All video formats failed. Detected format: ${detectedFormat}`);
-                updateDebugError('Try converting video to MP4 (H.264) format');
-                
-                // Show a helpful message to the user
-                const debugInfo = document.getElementById('ios-debug-info');
-                if (debugInfo) {
-                    debugInfo.innerHTML += `<br><br><strong>🎬 Detected Format:</strong> ${detectedFormat}`;
-                    debugInfo.innerHTML += '<br><br><strong>💡 Tip:</strong> iOS works best with MP4 videos. Try converting your video to MP4 format.';
-                    debugInfo.innerHTML += '<br><br><strong>🔧 Quick Fix:</strong> Use online converters like:';
-                    debugInfo.innerHTML += '<br>• <a href="https://convertio.co/" target="_blank" style="color: #00BFFF;">Convertio.co</a>';
-                    debugInfo.innerHTML += '<br>• <a href="https://www.onlinevideoconverter.com/" target="_blank" style="color: #00BFFF;">OnlineVideoConverter.com</a>';
-                    debugInfo.innerHTML += '<br>• <a href="https://cloudconvert.com/" target="_blank" style="color: #00BFFF;">CloudConvert.com</a>';
-                    debugInfo.innerHTML += '<br><br><strong>📱 iOS Requirements:</strong>';
-                    debugInfo.innerHTML += '<br>• Format: MP4 (H.264)';
-                    debugInfo.innerHTML += '<br>• Audio: AAC';
-                    debugInfo.innerHTML += '<br>• Resolution: Up to 4K';
-                    
-                    if (detectedFormat !== 'MP4') {
-                        debugInfo.innerHTML += `<br><br><strong>⚠️ Problem:</strong> Your video is ${detectedFormat} format, but iOS needs MP4 (H.264) format.`;
-                    }
-                }
             }
-        }
-        
-        function testVideoUrl() {
-            const videoPlayer = document.getElementById('html5-film-player');
-            const currentSrc = videoPlayer.src;
-            
-            console.log('=== VIDEO URL TEST ===');
-            console.log('Current video source:', currentSrc);
-            console.log('Video ready state:', videoPlayer.readyState);
-            console.log('Video network state:', videoPlayer.networkState);
-            console.log('Video error:', videoPlayer.error);
-            
-            updateDebugStatus('Testing video URL...');
-            updateDebugUrl('Current: ' + currentSrc);
-            
-            if (videoPlayer.error) {
-                console.error('Video error code:', videoPlayer.error.code);
-                console.error('Video error message:', videoPlayer.error.message);
-                updateDebugError('Error: ' + videoPlayer.error.message);
-            } else {
-                updateDebugError('No error detected');
-            }
-            
-            // Try to load the video again
-            videoPlayer.load();
-            console.log('Video reloaded');
-        }
-        
-        function forcePlayOnIOS() {
-            const videoPlayer = document.getElementById('html5-film-player');
-            const iosPlayButton = document.getElementById('ios-play-button');
-            
-            console.log('Attempting to force play on iOS...');
-            updateDebugStatus('Attempting to force play...');
-            
-            // Try to play the video
-            videoPlayer.play().then(() => {
-                console.log('Video started playing successfully on iOS');
-                updateDebugStatus('Video playing successfully!');
-                if (iosPlayButton) {
-                    iosPlayButton.style.display = 'none';
-                }
-            }).catch(error => {
-                console.error('Failed to play video on iOS:', error);
-                updateDebugStatus('Failed to play: ' + error.message);
-                updateDebugError(error.message);
-                
-                // Try reloading the video source
-                const currentSrc = videoPlayer.src;
-                videoPlayer.src = '';
-                videoPlayer.load();
-                setTimeout(() => {
-                    videoPlayer.src = currentSrc;
-                    videoPlayer.load();
-                    videoPlayer.play().catch(e => {
-                        console.error('Still failed after reload:', e);
-                        updateDebugStatus('Still failed after reload');
-                        updateDebugError(e.message);
-                    });
-                }, 1000);
-            });
         }
 
         function toggleUserList() {
             const userListContainer = document.getElementById('floating-user-list-container');
             const toggleArrow = document.getElementById('toggle-arrow');
-
             userListContainer.classList.toggle('collapsed');
             if (userListContainer.classList.contains('collapsed')) {
                 toggleArrow.innerHTML = '▶';
             } else {
                 toggleArrow.innerHTML = '▼';
+            }
+        }
+
+        // Add this at the top level of the script
+        function updateChat(messages) {
+            const chatMessagesDiv = document.getElementById('chat-messages');
+            if (!chatMessagesDiv) {
+                console.warn('[DEBUG] #chat-messages not found in DOM');
+                return;
+            }
+            chatMessagesDiv.innerHTML = '';
+            console.log('[DEBUG] updateChat called with:', messages);
+            // TEMP: Add a test message if messages is empty or undefined
+            if (!messages || messages.length === 0) {
+                messages = [{sender: 'TestBot', text: 'This is a test message!', timestamp: new Date()}];
+            }
+            if (messages && messages.length > 0) {
+                messages.sort((a, b) => {
+                    const tsA = a.timestamp && a.timestamp.toDate ? a.timestamp.toDate() : new Date(0);
+                    const tsB = b.timestamp && b.timestamp.toDate ? b.timestamp.toDate() : new Date(0);
+                    return tsA - tsB;
+                });
+                messages.forEach(msg => {
+                    const msgDiv = document.createElement('div');
+                    const senderSpan = document.createElement('span');
+                    senderSpan.classList.add('chat-sender');
+                    senderSpan.textContent = msg.sender + ': ';
+                    const textSpan = document.createElement('span');
+                    textSpan.textContent = msg.text;
+                    msgDiv.appendChild(senderSpan);
+                    msgDiv.appendChild(textSpan);
+                    chatMessagesDiv.appendChild(msgDiv);
+                });
+                chatMessagesDiv.scrollTop = chatMessagesDiv.scrollHeight;
+            } else {
+                // Show a message if chat is empty
+                chatMessagesDiv.innerHTML = '<div style="color:#888;text-align:center;">No chat messages yet.</div>';
             }
         }
     </script>
